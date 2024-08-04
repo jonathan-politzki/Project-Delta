@@ -12,6 +12,7 @@ logs/
 
 # Python
 delta_env/
+back_env/
 *.pyc
 __pycache__/
 
