@@ -1,2 +1,23 @@
+# Node modules and logs
+frontend/node_modules/
+frontend/npm-debug.log
+frontend/yarn-debug.log
+frontend/yarn-error.log
+
+# Logs
+logs/
+*.log
+
+# Python
 delta_env/
-node_modules/
+*.pyc
+__pycache__/
+
+# Environment variables
+frontend/.env
+backend/.env
+
+# Ignore specific files
+.DS_Store
+.idea/
+.vscode/
