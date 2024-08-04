@@ -5,6 +5,7 @@ frontend/yarn-debug.log
 frontend/yarn-error.log
 ../node_modules/
 
+
 # Logs
 logs/
 *.log
@@ -22,3 +23,5 @@ backend/.env
 .DS_Store
 .idea/
 .vscode/
+package.json
+package-lock.json
