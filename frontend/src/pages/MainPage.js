@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MainPage = () => {
   const [url, setUrl] = useState('');
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Submitted URL:', url);
+    setShowAnalysis(true);
   };
 
   return (
@@ -38,6 +41,22 @@ const MainPage = () => {
           </button>
         </div>
       </form>
+      
+      <AnimatePresence>
+        {showAnalysis && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-4xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
+          >
+            <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
+            <p>This is where your analysis results and visualizations will appear.</p>
+            {/* Add more analysis content here */}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
