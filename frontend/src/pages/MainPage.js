@@ -6,7 +6,6 @@ const MainPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Here you would handle the URL submission
     console.log('Submitted URL:', url);
   };
 
@@ -44,4 +43,3 @@ const MainPage = () => {
 };
 
 export default MainPage;
-

@@ -9,6 +9,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainPage />} />
         {/* <Route path="/about" element={<AboutPage />} /> */}  {/* Uncomment when you create this component */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
