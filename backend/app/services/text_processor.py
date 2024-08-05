@@ -1,26 +1,41 @@
 import re
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
+from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
+from textstat import flesch_reading_ease
 
 nltk.download('punkt')
 nltk.download('stopwords')
+nltk.download('vader_lexicon')
 
-def process_text(text: str) -> str:
+def process_text(text: str) -> dict:
     # Remove special characters and digits
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    clean_text = re.sub(r'[^a-zA-Z\s]', '', text)
     
     # Convert to lowercase
-    text = text.lower()
+    clean_text = clean_text.lower()
     
-    # Tokenize into sentences
+    # Tokenize into sentences and words
     sentences = sent_tokenize(text)
+    words = word_tokenize(clean_text)
     
     # Remove stopwords
     stop_words = set(stopwords.words('english'))
-    processed_sentences = [
-        ' '.join([word for word in sentence.split() if word not in stop_words])
-        for sentence in sentences
-    ]
+    filtered_words = [word for word in words if word not in stop_words]
     
-    return ' '.join(processed_sentences)
+    # Calculate readability score
+    readability_score = flesch_reading_ease(text)
+    
+    # Perform sentiment analysis
+    sia = SentimentIntensityAnalyzer()
+    sentiment_scores = sia.polarity_scores(text)
+    sentiment = 'positive' if sentiment_scores['compound'] > 0 else 'negative' if sentiment_scores['compound'] < 0 else 'neutral'
+    
+    return {
+        'processed_text': ' '.join(filtered_words),
+        'sentence_count': len(sentences),
+        'word_count': len(words),
+        'readability_score': readability_score,
+        'sentiment': sentiment
+    }
