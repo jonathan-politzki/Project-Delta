@@ -24,5 +24,3 @@ backend/.env
 .DS_Store
 .idea/
 .vscode/
-package.json
-package-lock.json
