@@ -8,6 +8,7 @@ from app.services.analysis_service import generate_analysis
 from app.core.vector_db import store_embedding
 from app.core.error_handlers import handle_analysis_error
 import pandas as pd
+from scraper import scrape_url, scraper_output_to_df
 
 router = APIRouter()
 
