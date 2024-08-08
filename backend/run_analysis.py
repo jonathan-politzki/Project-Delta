@@ -10,22 +10,52 @@ from app.schemas.analysis_schemas import AnalysisResponse
 import logging
 import os
 from tqdm import tqdm
+from functools import lru_cache
+from openai.error import RateLimitError
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+@lru_cache(maxsize=1000)
+def cached_generate_embedding(text: str) -> list[float]:
+    return generate_embedding(text)
+
+@lru_cache(maxsize=1000)
+async def cached_generate_insights(text: str) -> str:
+    return await generate_insights(text)
+
+async def process_all_posts(posts, max_retries=5, base_delay=1):
+    retries = 0
+    while True:
+        try:
+            processed_texts = [process_text(post['content']) for post in posts]
+            insights = await asyncio.gather(*[cached_generate_insights(text) for text in processed_texts])
+            embeddings = [cached_generate_embedding(text) for text in processed_texts]
+            analyses = await asyncio.gather(*[generate_analysis(text, emb) for text, emb in zip(processed_texts, embeddings)])
+            return analyses
+        except RateLimitError:
+            if retries >= max_retries:
+                raise
+            delay = base_delay * (2 ** retries)
+            logger.warning(f"Rate limit hit. Retrying in {delay} seconds.")
+            await asyncio.sleep(delay)
+            retries += 1
 
 async def analyze_file(file_path: str):
     logger.info(f"Analyzing file: {file_path}")
     df = pd.read_csv(file_path)
     
-    results = []
-    for _, row in tqdm(df.iterrows(), total=len(df), desc="Processing posts"):
-        processed_text = process_text(row['content'])
-        insights = await generate_insights(processed_text)
-        embedding = generate_embedding(processed_text)
-        analysis = await generate_analysis(processed_text, embedding)
-        results.append(analysis)
-    
+    try:
+        posts = df.to_dict('records')
+        results = await process_all_posts(posts)
+    except Exception as e:
+        logger.error(f"Error processing file: {str(e)}")
+        raise
+
+    if not results:
+        raise ValueError("No results were processed successfully")
+
     combined_analysis = {
         "insights": "\n".join([r['insights'] for r in results]),
         "writing_style": pd.Series([r['writing_style'] for r in results]).mode().iloc[0],
