@@ -1,10 +1,13 @@
+# analysis_service.py
+
 from collections import Counter
 from nltk import pos_tag, word_tokenize
 import nltk
+from llm_service import generate_insights
 
 nltk.download('averaged_perceptron_tagger')
 
-def generate_analysis(insights: str, processed_text: dict) -> dict:
+async def generate_analysis(processed_text: dict) -> dict:
     # Extract key themes (most common nouns)
     words = word_tokenize(processed_text['processed_text'])
     tagged_words = pos_tag(words)
@@ -19,6 +22,9 @@ def generate_analysis(insights: str, processed_text: dict) -> dict:
         writing_style = "Concise and to-the-point"
     else:
         writing_style = "Balanced and clear"
+    
+    # Generate insights using the LLM
+    insights = await generate_insights(processed_text['processed_text'])
     
     return {
         "insights": insights,

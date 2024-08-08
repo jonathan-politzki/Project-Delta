@@ -25,7 +25,7 @@ nltk==3.6.3
 numpy==2.0.1
 openai==0.27.0
 pandas==2.2.2
-pydantic==1.8.2
+pydantic==1.9
 pymilvus==2.1.0
 pyphen==0.16.0
 python-dateutil==2.9.0.post0
