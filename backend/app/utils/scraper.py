@@ -1,3 +1,5 @@
+# backend/app/utils/scraper.py
+
 import httpx
 from bs4 import BeautifulSoup
 import feedparser

@@ -1,15 +1,16 @@
-# analysis_service.py
-
 from collections import Counter
 from nltk import pos_tag, word_tokenize
 import nltk
-from llm_service import generate_insights
-from vector_db import insert_data, search_vectors
-from embedding_service import generate_embedding
+from .llm_service import generate_insights
+from ..core.vector_db import insert_data, search_vectors
+import logging
 
 nltk.download('averaged_perceptron_tagger')
+logger = logging.getLogger(__name__)
 
-async def generate_analysis(processed_text: dict) -> dict:
+async def generate_analysis(processed_text: dict, embedding: list[float]) -> dict:
+    logger.info("Generating analysis")
+    
     # Extract key themes (most common nouns)
     words = word_tokenize(processed_text['processed_text'])
     tagged_words = pos_tag(words)
@@ -28,8 +29,7 @@ async def generate_analysis(processed_text: dict) -> dict:
     # Generate insights using the LLM
     insights = await generate_insights(processed_text['processed_text'])
     
-    # Generate embedding and store in vector database
-    embedding = generate_embedding(processed_text['processed_text'])
+    # Store in vector database
     insert_data("demo_collection", [{
         "id": processed_text.get('id', 0),  # You might want to generate a unique ID
         "vector": embedding,
@@ -39,6 +39,8 @@ async def generate_analysis(processed_text: dict) -> dict:
     
     # Perform a similarity search
     similar_texts = search_vectors("demo_collection", [embedding], limit=3, output_fields=["text"])
+    
+    logger.info("Analysis generated successfully")
     
     return {
         "insights": insights,

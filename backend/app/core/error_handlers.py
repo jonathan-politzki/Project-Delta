@@ -1,3 +1,5 @@
+# backend/app/core/error_handlers.py
+
 from fastapi import HTTPException
 
 def handle_analysis_error(error: Exception) -> HTTPException:
