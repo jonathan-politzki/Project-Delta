@@ -1,5 +1,3 @@
-# run_analysis.py
-
 import asyncio
 import pandas as pd
 from app.services.text_processor import process_text
@@ -13,9 +11,13 @@ from tqdm import tqdm
 from functools import lru_cache
 from openai.error import RateLimitError
 import time
+import tiktoken
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Initialize the tokenizer
+tokenizer = tiktoken.get_encoding("cl100k_base")
 
 @lru_cache(maxsize=1000)
 def cached_generate_embedding(text: str) -> list[float]:
@@ -25,15 +27,18 @@ def cached_generate_embedding(text: str) -> list[float]:
 async def cached_generate_insights(text: str) -> str:
     return await generate_insights(text)
 
-async def process_all_posts(posts, max_retries=5, base_delay=1):
+def count_tokens(text: str) -> int:
+    return len(tokenizer.encode(text))
+
+async def process_post(post, max_retries=5, base_delay=1):
     retries = 0
     while True:
         try:
-            processed_texts = [process_text(post['content']) for post in posts]
-            insights = await asyncio.gather(*[cached_generate_insights(text) for text in processed_texts])
-            embeddings = [cached_generate_embedding(text) for text in processed_texts]
-            analyses = await asyncio.gather(*[generate_analysis(text, emb) for text, emb in zip(processed_texts, embeddings)])
-            return analyses
+            processed_text = process_text(post['content'])
+            insights = await cached_generate_insights(processed_text)
+            embedding = cached_generate_embedding(processed_text)
+            analysis = await generate_analysis(processed_text, embedding)
+            return analysis
         except RateLimitError:
             if retries >= max_retries:
                 raise
@@ -46,12 +51,13 @@ async def analyze_file(file_path: str):
     logger.info(f"Analyzing file: {file_path}")
     df = pd.read_csv(file_path)
     
-    try:
-        posts = df.to_dict('records')
-        results = await process_all_posts(posts)
-    except Exception as e:
-        logger.error(f"Error processing file: {str(e)}")
-        raise
+    results = []
+    for _, post in tqdm(df.iterrows(), total=len(df), desc="Processing posts"):
+        try:
+            result = await process_post(post)
+            results.append(result)
+        except Exception as e:
+            logger.error(f"Error processing post: {str(e)}")
 
     if not results:
         raise ValueError("No results were processed successfully")
@@ -68,7 +74,7 @@ async def analyze_file(file_path: str):
     return AnalysisResponse(**combined_analysis)
 
 async def main():
-    output_dir = "output"  # Directory where your scraped CSV files are stored
+    output_dir = "output"
     file_paths = [os.path.join(output_dir, f) for f in os.listdir(output_dir) if f.endswith('.csv')]
     
     for file_path in file_paths:
@@ -77,7 +83,6 @@ async def main():
             logger.info(f"Analysis result for {file_path}:")
             logger.info(analysis_result.json(indent=2))
             
-            # Save the result to a file
             result_file = f"{os.path.splitext(file_path)[0]}_analysis_result.json"
             with open(result_file, "w") as f:
                 f.write(analysis_result.json(indent=2))
