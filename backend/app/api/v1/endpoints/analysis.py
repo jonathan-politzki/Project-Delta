@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.schemas.analysis import AnalysisResponse, AnalysisRequest
-from app.services.scraper import scrape_url, scraper_output_to_df
+from backend.scraper import scrape_url, scraper_output_to_df
 from app.services.text_processor import process_text
 from app.services.llm_service import generate_insights
 from app.services.embedding_service import generate_embedding
