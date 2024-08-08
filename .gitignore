@@ -10,6 +10,9 @@ node_modules
 logs/
 *.log
 
+# backend data output
+backend/data/
+
 # Python
 delta_env/
 back_env/
