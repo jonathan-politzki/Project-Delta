@@ -4,6 +4,8 @@ from collections import Counter
 from nltk import pos_tag, word_tokenize
 import nltk
 from llm_service import generate_insights
+from vector_db import insert_data, search_vectors
+from embedding_service import generate_embedding
 
 nltk.download('averaged_perceptron_tagger')
 
@@ -26,10 +28,23 @@ async def generate_analysis(processed_text: dict) -> dict:
     # Generate insights using the LLM
     insights = await generate_insights(processed_text['processed_text'])
     
+    # Generate embedding and store in vector database
+    embedding = generate_embedding(processed_text['processed_text'])
+    insert_data("demo_collection", [{
+        "id": processed_text.get('id', 0),  # You might want to generate a unique ID
+        "vector": embedding,
+        "text": processed_text['processed_text'],
+        "subject": "analysis"  # You can adjust this as needed
+    }])
+    
+    # Perform a similarity search
+    similar_texts = search_vectors("demo_collection", [embedding], limit=3, output_fields=["text"])
+    
     return {
         "insights": insights,
         "writing_style": writing_style,
         "key_themes": key_themes,
         "readability_score": processed_text['readability_score'],
-        "sentiment": processed_text['sentiment']
+        "sentiment": processed_text['sentiment'],
+        "similar_texts": [result['entity']['text'] for result in similar_texts[0]]
     }
