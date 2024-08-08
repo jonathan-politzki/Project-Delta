@@ -1,13 +1,18 @@
+# backend/app/api/v1/endpoints/analysis.py
+
 from fastapi import APIRouter, HTTPException
-from app.schemas.analysis import AnalysisResponse, AnalysisRequest
+from app.schemas.analysis_schemas import AnalysisResponse, AnalysisRequest
 from app.services.text_processor import process_text
 from app.services.llm_service import generate_insights
 from app.services.embedding_service import generate_embedding
 from app.services.analysis_service import generate_analysis
 from app.core.error_handlers import handle_analysis_error
 import pandas as pd
-from ...scraper import scrape_url, scraper_output_to_df
+from app.utils.scraper import scrape_url, scraper_output_to_df
 import logging
+from app.schemas.analysis_schemas import AnalysisResponse, AnalysisRequest
+from app.utils.scraper import scrape_url, scraper_output_to_df
+
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

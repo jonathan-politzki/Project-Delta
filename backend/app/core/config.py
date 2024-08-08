@@ -1,4 +1,4 @@
-# llm_config.py
+# backend/app/core/config.py
 
 import os
 

@@ -3,7 +3,7 @@
 import numpy as np
 from anthropic import Anthropic
 import openai
-from llm_config import LLM_PROVIDER, ANTHROPIC_API_KEY, OPENAI_API_KEY
+from app.core.config import LLM_PROVIDER, ANTHROPIC_API_KEY, OPENAI_API_KEY
 
 anthropic = Anthropic(api_key=ANTHROPIC_API_KEY)
 openai.api_key = OPENAI_API_KEY

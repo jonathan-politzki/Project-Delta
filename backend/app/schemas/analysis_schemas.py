@@ -1,4 +1,4 @@
-# backend/app/schemas/analysis.py
+# backend/app/schemas/analysis_schemas.py
 
 from pydantic import BaseModel, HttpUrl, Field
 
