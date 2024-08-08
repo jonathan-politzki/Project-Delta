@@ -1,8 +1,11 @@
-from asyncio.log import logger, logging
 import pytest
 from scraper import scrape_url, save_to_csv
 import os
 import pandas as pd
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @pytest.mark.asyncio
 async def test_scrape_medium_with_csv():
@@ -19,7 +22,7 @@ async def test_scrape_medium_with_csv():
     # Check CSV content
     df = pd.read_csv(csv_path)
     assert not df.empty
-    assert all(column in df.columns for column in ['title', 'url', 'content', 'date'])
+    assert all(column in df.columns for column in ['title', 'url', 'content', 'date', 'subtitle', 'like_count'])
 
 @pytest.mark.asyncio
 async def test_scrape_substack_with_csv():
@@ -42,10 +45,9 @@ async def test_scrape_substack_with_csv():
         # Check CSV content
         df = pd.read_csv(csv_path)
         assert not df.empty
-        assert all(column in df.columns for column in ['title', 'url', 'content', 'date'])
+        assert all(column in df.columns for column in ['title', 'subtitle', 'url', 'content', 'date', 'like_count'])
     else:
         logger.warning("No CSV file was generated due to lack of data")
-
 
 @pytest.mark.asyncio
 async def test_unsupported_platform():

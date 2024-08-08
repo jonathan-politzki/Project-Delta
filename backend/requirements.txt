@@ -46,3 +46,7 @@ ujson==5.4.0
 urllib3==2.2.2
 uvicorn==0.15.0
 yarl==1.9.4
+bs4==0.0.1
+html2text==2020.1.16
+selenium==4.16.0
+webdriver_manager==4.0.1
