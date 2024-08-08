@@ -12,6 +12,8 @@ logs/
 
 # backend data output
 backend/data/
+backend/output/
+
 
 # Python
 delta_env/
