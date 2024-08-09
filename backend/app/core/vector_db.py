@@ -55,15 +55,19 @@ def search_vectors(collection_name, query_vectors, limit=5, output_fields=None):
         "metric_type": "L2",
         "params": {"nprobe": 10},
     }
-    return client.search(
-        collection_name=collection_name,
-        data=query_vectors,
-        anns_field="vector",
-        param=search_params,
-        limit=limit,
-        output_fields=output_fields
-    )
-
+    try:
+        return client.search(
+            collection_name=collection_name,
+            data=query_vectors,
+            anns_field="vector",
+            param=search_params,
+            limit=limit,
+            output_fields=output_fields
+        )
+    except Exception as e:
+        logger.error(f"Error during vector search: {str(e)}")
+        return []
+    
 # Create the collection when this module is imported
 if client is not None:
     create_collection()

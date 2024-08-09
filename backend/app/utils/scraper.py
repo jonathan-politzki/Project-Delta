@@ -166,13 +166,10 @@ async def scrape_medium(url: str) -> Dict[str, List[Dict[str, str]]]:
     return {'posts': entries}
 
 async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
-    parsed_url = urlparse(url)
-    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-    
-    logger.info(f"Fetching Substack posts from: {base_url}")
+    logger.info(f"Fetching Substack posts from: {url}")
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{base_url}/feed")
+            response = await client.get(f"{url}feed")
             response.raise_for_status()
             feed = feedparser.parse(response.text)
             logger.info(f"Number of entries in feed: {len(feed.entries)}")
@@ -200,7 +197,6 @@ async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
     logger.info(f"Scraped {len(entries)} posts from Substack")
     return {'posts': entries}
 
-
 async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
     parsed_url = urlparse(url)
     
@@ -211,13 +207,18 @@ async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
         if username.startswith('@'):
             username = username[1:]
         return await scrape_medium(f"https://medium.com/@{username}")
-    elif 'substack.com' in parsed_url.netloc:
+    elif 'substack.com' in parsed_url.netloc or parsed_url.netloc.endswith('.com'):
         # Handle Substack URLs
         if parsed_url.path.startswith('/@'):
             username = parsed_url.path.split('@')[1].split('/')[0]
+        elif 'substack.com' in parsed_url.netloc:
+            username = parsed_url.netloc.split('.')[0]
         else:
             username = parsed_url.netloc.split('.')[0]
-        return await scrape_substack(f"https://{username}.substack.com")
+        
+        # Standardize to username.substack.com format
+        substack_url = f"https://{username}.substack.com/"
+        return await scrape_substack(substack_url)
     else:
         raise ValueError(f"Unsupported URL: {url}")
 

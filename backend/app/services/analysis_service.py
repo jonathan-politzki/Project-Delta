@@ -48,7 +48,7 @@ async def generate_analysis(processed_text: dict, embedding: list[float]) -> dic
             similar_texts = [result['entity']['text'] for result in search_results[0] if 'entity' in result and 'text' in result['entity']]
             logger.info(f"Found {len(similar_texts)} similar texts")
         except Exception as e:
-            logger.warning(f"Milvus operations skipped: {str(e)}")
+            logger.warning(f"Milvus operation failed: {str(e)}")
         
         logger.info("Analysis generated successfully")
         
