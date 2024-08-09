@@ -206,20 +206,24 @@ async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
     return {'posts': entries}
 
 async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
-    try:
-        parsed_url = urlparse(url)
-        if not parsed_url.scheme or not parsed_url.netloc:
-            raise ValueError(f"Invalid URL format: {url}")
-        
-        if 'medium.com' in parsed_url.netloc:
-            return await scrape_medium(url)
-        elif 'substack.com' in parsed_url.netloc:
-            return await scrape_substack(url)
+    parsed_url = urlparse(url)
+    
+    if 'medium.com' in parsed_url.netloc:
+        # Handle Medium URLs
+        path_parts = parsed_url.path.strip('/').split('/')
+        username = path_parts[0] if path_parts else ''
+        if username.startswith('@'):
+            username = username[1:]
+        return await scrape_medium(f"https://medium.com/@{username}")
+    elif 'substack.com' in parsed_url.netloc:
+        # Handle Substack URLs
+        if parsed_url.path.startswith('/@'):
+            username = parsed_url.path.split('@')[1].split('/')[0]
         else:
-            raise ValueError(f"Unsupported URL: {url}")
-    except Exception as e:
-        logger.error(f"Error scraping URL {url}: {str(e)}")
-        raise
+            username = parsed_url.netloc.split('.')[0]
+        return await scrape_substack(f"https://{username}.substack.com")
+    else:
+        raise ValueError(f"Unsupported URL: {url}")
 
 def save_to_csv(data: Dict[str, List[Dict[str, str]]], filename: str):
     os.makedirs(BASE_DIR_NAME, exist_ok=True)
