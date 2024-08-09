@@ -1,0 +1,5 @@
+echo "*.py
+requirements.txt
+backend/
+delta_env/" > .vercelignore
+
