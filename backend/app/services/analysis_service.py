@@ -7,7 +7,6 @@ from .llm_service import generate_insights
 from .embedding_service import generate_embedding
 from ..core.vector_db import insert_data, search_vectors
 import logging
-import random
 
 nltk.download('averaged_perceptron_tagger', quiet=True)
 logger = logging.getLogger(__name__)
@@ -33,6 +32,9 @@ async def generate_analysis(processed_text: dict) -> dict:
         
         # Generate insights using the LLM
         insights = await generate_insights(processed_text['processed_text'])
+        
+        # Generate embedding
+        embedding = await generate_embedding(processed_text['processed_text'])
         
         similar_texts = []
         if embedding and len(embedding) == 1536:  # Ensure the embedding is the correct length
