@@ -1,14 +1,18 @@
+# backend/app/services/analysis_service.py
+
 from collections import Counter
 from nltk import pos_tag, word_tokenize
 import nltk
 from .llm_service import generate_insights
+from .embedding_service import generate_embedding
 from ..core.vector_db import insert_data, search_vectors
 import logging
+import random
 
-nltk.download('averaged_perceptron_tagger')
+nltk.download('averaged_perceptron_tagger', quiet=True)
 logger = logging.getLogger(__name__)
 
-async def generate_analysis(processed_text: dict, embedding: list[float]) -> dict:
+async def generate_analysis(processed_text: dict) -> dict:
     logger.info("Generating analysis")
     
     try:
@@ -30,16 +34,25 @@ async def generate_analysis(processed_text: dict, embedding: list[float]) -> dic
         # Generate insights using the LLM
         insights = await generate_insights(processed_text['processed_text'])
         
-        # Store in vector database
-        insert_data("demo_collection", [{
-            "id": processed_text.get('id', 0),  # You might want to generate a unique ID
-            "vector": embedding,
-            "text": processed_text['processed_text'],
-            "subject": "analysis"  # You can adjust this as needed
-        }])
-        
-        # Perform a similarity search
-        similar_texts = search_vectors("demo_collection", [embedding], limit=3, output_fields=["text"])
+        similar_texts = []
+        if embedding and len(embedding) == 1536:  # Ensure the embedding is the correct length
+            # Insert into Milvus
+            try:
+                insert_data("demo_collection", [{
+                    "vector": embedding,
+                    "text": processed_text['processed_text'][:65535],  # Truncate if necessary
+                    "subject": "analysis"
+                }])
+                logger.info("Successfully inserted data into Milvus")
+                
+                # Perform a similarity search
+                search_results = search_vectors("demo_collection", [embedding], limit=3, output_fields=["text"])
+                similar_texts = [result['entity']['text'] for result in search_results[0] if 'entity' in result and 'text' in result['entity']]
+                logger.info(f"Found {len(similar_texts)} similar texts")
+            except Exception as e:
+                logger.error(f"Error with Milvus operations: {str(e)}")
+        else:
+            logger.warning("Skipping Milvus operations due to invalid embedding")
         
         logger.info("Analysis generated successfully")
         
@@ -49,7 +62,7 @@ async def generate_analysis(processed_text: dict, embedding: list[float]) -> dic
             "key_themes": key_themes,
             "readability_score": processed_text['readability_score'],
             "sentiment": processed_text['sentiment'],
-            "similar_texts": [result['entity']['text'] for result in similar_texts[0] if 'entity' in result and 'text' in result['entity']]
+            "similar_texts": similar_texts
         }
     except Exception as e:
         logger.error(f"Error in generate_analysis: {str(e)}", exc_info=True)

@@ -1,3 +1,5 @@
+# run_analysis.py
+
 import asyncio
 import pandas as pd
 from app.services.text_processor import process_text
@@ -8,8 +10,6 @@ from app.schemas.analysis_schemas import AnalysisResponse
 import logging
 import os
 from tqdm import tqdm
-from openai.error import RateLimitError
-import time
 import json
 
 logging.basicConfig(level=logging.INFO)
@@ -32,39 +32,30 @@ def cached_generate_embedding(text: str) -> list[float]:
     cache[text] = embedding
     return embedding
 
-async def process_post(content: str, max_retries=5, base_delay=1):
-    retries = 0
-    while True:
-        try:
-            processed_text = process_text(content)
-            logger.info(f"Processed text: {processed_text['processed_text'][:100]}...")
+async def process_post(content: str):
+    try:
+        processed_text = process_text(content)
+        logger.info(f"Processed text: {processed_text['processed_text'][:100]}...")
 
-            insights = await cached_generate_insights(processed_text['processed_text'])
-            logger.info(f"Generated insights: {insights[:100]}...")
+        insights = await cached_generate_insights(processed_text['processed_text'])
+        logger.info(f"Generated insights: {insights[:100]}...")
 
-            embedding = cached_generate_embedding(processed_text['processed_text'])
-            logger.info(f"Generated embedding (first 5 values): {embedding[:5]}")
+        embedding = cached_generate_embedding(processed_text['processed_text'])
+        logger.info(f"Generated embedding (first 5 values): {embedding[:5]}")
 
-            analysis = await generate_analysis(processed_text, embedding)
-            logger.info(f"Generated analysis: {json.dumps(analysis, indent=2)}")
+        analysis = await generate_analysis(processed_text, embedding)
+        logger.info(f"Generated analysis: {json.dumps(analysis, indent=2)}")
 
-            return analysis
-        except RateLimitError:
-            if retries >= max_retries:
-                raise
-            delay = base_delay * (2 ** retries)
-            logger.warning(f"Rate limit hit. Retrying in {delay} seconds.")
-            await asyncio.sleep(delay)
-            retries += 1
-        except Exception as e:
-            logger.error(f"Error in process_post: {str(e)}", exc_info=True)
-            return {
-                "insights": f"Error processing post: {str(e)}",
-                "writing_style": "Unknown",
-                "key_themes": [],
-                "readability_score": 0,
-                "sentiment": "Unknown",
-            }
+        return analysis
+    except Exception as e:
+        logger.error(f"Error in process_post: {str(e)}", exc_info=True)
+        return {
+            "insights": f"Error processing post: {str(e)}",
+            "writing_style": "Unknown",
+            "key_themes": [],
+            "readability_score": 0,
+            "sentiment": "Unknown",
+        }
 
 async def analyze_file(file_path: str):
     logger.info(f"Analyzing file: {file_path}")
