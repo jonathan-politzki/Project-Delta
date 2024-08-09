@@ -8,36 +8,46 @@ from app.schemas.analysis_schemas import AnalysisResponse
 import logging
 import os
 from tqdm import tqdm
-from functools import lru_cache
 from openai.error import RateLimitError
 import time
-import tiktoken
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize the tokenizer
-tokenizer = tiktoken.get_encoding("cl100k_base")
+# Simple cache implementation
+cache = {}
 
-@lru_cache(maxsize=1000)
-def cached_generate_embedding(text: str) -> list[float]:
-    return generate_embedding(text)
-
-@lru_cache(maxsize=1000)
 async def cached_generate_insights(text: str) -> str:
-    return await generate_insights(text)
+    if text in cache:
+        return cache[text]
+    insights = await generate_insights(text)
+    cache[text] = insights
+    return insights
 
-def count_tokens(text: str) -> int:
-    return len(tokenizer.encode(text))
+def cached_generate_embedding(text: str) -> list[float]:
+    if text in cache:
+        return cache[text]
+    embedding = generate_embedding(text)
+    cache[text] = embedding
+    return embedding
 
-async def process_post(post, max_retries=5, base_delay=1):
+async def process_post(content: str, max_retries=5, base_delay=1):
     retries = 0
     while True:
         try:
-            processed_text = process_text(post['content'])
-            insights = await cached_generate_insights(processed_text)
-            embedding = cached_generate_embedding(processed_text)
+            processed_text = process_text(content)
+            logger.info(f"Processed text: {processed_text['processed_text'][:100]}...")
+
+            insights = await cached_generate_insights(processed_text['processed_text'])
+            logger.info(f"Generated insights: {insights[:100]}...")
+
+            embedding = cached_generate_embedding(processed_text['processed_text'])
+            logger.info(f"Generated embedding (first 5 values): {embedding[:5]}")
+
             analysis = await generate_analysis(processed_text, embedding)
+            logger.info(f"Generated analysis: {json.dumps(analysis, indent=2)}")
+
             return analysis
         except RateLimitError:
             if retries >= max_retries:
@@ -46,6 +56,15 @@ async def process_post(post, max_retries=5, base_delay=1):
             logger.warning(f"Rate limit hit. Retrying in {delay} seconds.")
             await asyncio.sleep(delay)
             retries += 1
+        except Exception as e:
+            logger.error(f"Error in process_post: {str(e)}", exc_info=True)
+            return {
+                "insights": f"Error processing post: {str(e)}",
+                "writing_style": "Unknown",
+                "key_themes": [],
+                "readability_score": 0,
+                "sentiment": "Unknown",
+            }
 
 async def analyze_file(file_path: str):
     logger.info(f"Analyzing file: {file_path}")
@@ -53,11 +72,8 @@ async def analyze_file(file_path: str):
     
     results = []
     for _, post in tqdm(df.iterrows(), total=len(df), desc="Processing posts"):
-        try:
-            result = await process_post(post)
-            results.append(result)
-        except Exception as e:
-            logger.error(f"Error processing post: {str(e)}")
+        result = await process_post(post['content'])
+        results.append(result)
 
     if not results:
         raise ValueError("No results were processed successfully")
@@ -65,7 +81,7 @@ async def analyze_file(file_path: str):
     combined_analysis = {
         "insights": "\n".join([r['insights'] for r in results]),
         "writing_style": pd.Series([r['writing_style'] for r in results]).mode().iloc[0],
-        "key_themes": list(set([theme for r in results for theme in r['key_themes']])),
+        "key_themes": list(set([theme for r in results for theme in r.get('key_themes', [])])),
         "readability_score": sum([r['readability_score'] for r in results]) / len(results),
         "sentiment": pd.Series([r['sentiment'] for r in results]).mode().iloc[0],
         "post_count": len(results)
