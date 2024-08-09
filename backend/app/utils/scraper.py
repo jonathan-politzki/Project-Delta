@@ -167,12 +167,7 @@ async def scrape_medium(url: str) -> Dict[str, List[Dict[str, str]]]:
 
 async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
     parsed_url = urlparse(url)
-    
-    # Ensure the scheme (protocol) is set
-    if not parsed_url.scheme:
-        parsed_url = parsed_url._replace(scheme='https')
-    
-    base_url = urlunparse(parsed_url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
     
     logger.info(f"Fetching Substack posts from: {base_url}")
     async with httpx.AsyncClient() as client:
@@ -204,6 +199,7 @@ async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
 
     logger.info(f"Scraped {len(entries)} posts from Substack")
     return {'posts': entries}
+
 
 async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
     parsed_url = urlparse(url)
