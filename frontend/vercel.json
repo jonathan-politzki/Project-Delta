@@ -2,17 +2,16 @@
     "version": 2,
     "buildCommand": "npm run build",
     "outputDirectory": "build",
-    "devCommand": "npm start",
     "framework": "create-react-app",
-    "builds": [
-      {
-        "src": "package.json",
-        "use": "@vercel/node"
-      }
-    ],
     "routes": [
-      { "handle": "filesystem" },
-      { "src": "/.*", "dest": "/index.html" }
+      {
+        "src": "/static/(.*)",
+        "headers": { "cache-control": "s-maxage=31536000, immutable" },
+        "dest": "/static/$1"
+      },
+      { "src": "/favicon.ico", "dest": "/favicon.ico" },
+      { "src": "/manifest.json", "dest": "/manifest.json" },
+      { "src": "/logo192.png", "dest": "/logo192.png" },
+      { "src": "/(.*)", "dest": "/index.html" }
     ]
   }
-  
