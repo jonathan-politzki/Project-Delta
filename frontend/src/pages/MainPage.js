@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { analyzeUrl } from '../services/api';
 
 const MainPage = () => {
   const [url, setUrl] = useState('');
-  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitted URL:', url);
-    setShowAnalysis(true);
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await analyzeUrl(url);
+      setAnalysisResult(result);
+    } catch (err) {
+      setError('An error occurred while analyzing the URL. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,14 +47,15 @@ const MainPage = () => {
           <button
             className="flex-shrink-0 bg-white hover:bg-gray-200 text-slate-900 font-bold py-2 px-4 rounded"
             type="submit"
+            disabled={isLoading}
           >
-            Analyze
+            {isLoading ? 'Analyzing...' : 'Analyze'}
           </button>
         </div>
       </form>
       
       <AnimatePresence>
-        {showAnalysis && (
+        {analysisResult && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -52,11 +64,19 @@ const MainPage = () => {
             className="w-full max-w-4xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
           >
             <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-            <p>This is where your analysis results and visualizations will appear.</p>
-            {/* Add more analysis content here */}
+            <p><strong>Insights:</strong> {analysisResult.insights}</p>
+            <p><strong>Writing Style:</strong> {analysisResult.writing_style}</p>
+            <p><strong>Key Themes:</strong> {analysisResult.key_themes.join(', ')}</p>
+            <p><strong>Readability Score:</strong> {analysisResult.readability_score.toFixed(2)}</p>
+            <p><strong>Sentiment:</strong> {analysisResult.sentiment}</p>
+            <p><strong>Post Count:</strong> {analysisResult.post_count}</p>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {error && (
+        <p className="text-red-500 mt-4">{error}</p>
+      )}
     </div>
   );
 };
