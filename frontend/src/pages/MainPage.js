@@ -1,7 +1,11 @@
+// frontend/src/pages/MainPage.js
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { analyzeUrl } from '../services/api';
+import { analyzeUrl } from '../services/api';  // Update this line
+
+
 
 const MainPage = () => {
   const [url, setUrl] = useState('');

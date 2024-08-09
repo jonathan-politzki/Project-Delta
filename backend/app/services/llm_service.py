@@ -11,7 +11,7 @@ async def generate_insights(text: str) -> str:
     if LLM_PROVIDER == "openai":
         try:
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",  
+                model="gpt-4",  # or whichever model you're using
                 messages=[
                     {"role": "system", "content": "You are a writing analyst. Provide insights on the writing style and key themes of the given text."},
                     {"role": "user", "content": text}

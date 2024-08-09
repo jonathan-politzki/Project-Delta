@@ -1,3 +1,5 @@
+// frontend/src/services/api.js
+
 const API_URL = 'http://localhost:8000/api/v1';
 
 export const analyzeUrl = async (url) => {

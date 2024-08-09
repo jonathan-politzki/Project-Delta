@@ -122,7 +122,16 @@ from urllib.parse import urlparse
 
 async def scrape_medium(url: str) -> Dict[str, List[Dict[str, str]]]:
     parsed_url = urlparse(url)
-    username = parsed_url.path.strip('/').split('@')[-1].split('/')[0]
+    path_parts = parsed_url.path.strip('/').split('/')
+    
+    if parsed_url.netloc == 'medium.com':
+        username = path_parts[0] if path_parts else ''
+    else:
+        username = parsed_url.netloc.split('.')[0]
+    
+    if username.startswith('@'):
+        username = username[1:]
+    
     rss_url = f'https://medium.com/feed/@{username}'
     
     logger.info(f"Fetching RSS feed from: {rss_url}")

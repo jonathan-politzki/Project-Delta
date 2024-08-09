@@ -37,11 +37,15 @@ async def analyze_url(request: AnalysisRequest):
         # Process each article/post
         results = []
         for _, row in df.iterrows():
-            processed_text = process_text(row['content'])
-            insights = await generate_insights(processed_text)
-            embedding = await generate_embedding(processed_text)  # Now awaiting the async function
-            analysis = await generate_analysis(processed_text, embedding)
-            results.append(analysis)
+            try:
+                processed_text = process_text(row['content'])
+                insights = await generate_insights(processed_text['processed_text'])
+                embedding = await generate_embedding(processed_text['processed_text'])
+                analysis = await generate_analysis(processed_text, embedding)
+                results.append(analysis)
+            except Exception as e:
+                logger.error(f"Error processing post: {str(e)}")
+                # Continue with the next post instead of breaking the loop
         
         logger.info(f"Analyzed {len(results)} posts")
         
@@ -66,4 +70,4 @@ async def analyze_url(request: AnalysisRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during analysis")

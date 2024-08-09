@@ -33,25 +33,22 @@ async def generate_analysis(processed_text: dict, embedding: list[float]) -> dic
         # Generate insights using the LLM
         insights = await generate_insights(processed_text['processed_text'])
         
+        # Milvus operations (disabled for now)
         similar_texts = []
-        if embedding and len(embedding) == 1536:  # Ensure the embedding is the correct length
-            # Insert into Milvus
-            try:
-                insert_data("demo_collection", [{
-                    "vector": embedding,
-                    "text": processed_text['processed_text'][:65535],  # Truncate if necessary
-                    "subject": "analysis"
-                }])
-                logger.info("Successfully inserted data into Milvus")
-                
-                # Perform a similarity search
-                search_results = search_vectors("demo_collection", [embedding], limit=3, output_fields=["text"])
-                similar_texts = [result['entity']['text'] for result in search_results[0] if 'entity' in result and 'text' in result['entity']]
-                logger.info(f"Found {len(similar_texts)} similar texts")
-            except Exception as e:
-                logger.error(f"Error with Milvus operations: {str(e)}")
-        else:
-            logger.warning("Skipping Milvus operations due to invalid embedding")
+        try:
+            insert_data("demo_collection", [{
+                "vector": embedding,
+                "text": processed_text['processed_text'][:65535],  # Truncate if necessary
+                "subject": "analysis"
+            }])
+            logger.info("Successfully inserted data into Milvus")
+            
+            # Perform a similarity search
+            search_results = search_vectors("demo_collection", [embedding], limit=3, output_fields=["text"])
+            similar_texts = [result['entity']['text'] for result in search_results[0] if 'entity' in result and 'text' in result['entity']]
+            logger.info(f"Found {len(similar_texts)} similar texts")
+        except Exception as e:
+            logger.warning(f"Milvus operations skipped: {str(e)}")
         
         logger.info("Analysis generated successfully")
         
