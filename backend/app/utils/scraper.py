@@ -167,12 +167,17 @@ async def scrape_medium(url: str) -> Dict[str, List[Dict[str, str]]]:
 
 async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
     logger.info(f"Fetching Substack posts from: {url}")
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         try:
             response = await client.get(f"{url}feed")
             response.raise_for_status()
             feed = feedparser.parse(response.text)
             logger.info(f"Number of entries in feed: {len(feed.entries)}")
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error occurred: {e}")
+            logger.error(f"Response status code: {e.response.status_code}")
+            logger.error(f"Response content: {e.response.text}")
+            return {'posts': []}
         except Exception as e:
             logger.error(f"Error fetching Substack feed: {str(e)}")
             return {'posts': []}
@@ -218,9 +223,12 @@ async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
         
         # Standardize to username.substack.com format
         substack_url = f"https://{username}.substack.com/"
+        logger.info(f"Transformed Substack URL: {substack_url}")
         return await scrape_substack(substack_url)
     else:
         raise ValueError(f"Unsupported URL: {url}")
+
+
 
 def save_to_csv(data: Dict[str, List[Dict[str, str]]], filename: str):
     os.makedirs(BASE_DIR_NAME, exist_ok=True)

@@ -18,47 +18,37 @@ logger = logging.getLogger(__name__)
 async def analyze_url(request: AnalysisRequest):
     try:
         logger.info(f"Analyzing URL: {request.url}")
-        url = request.url
-        
-        if 'medium.com' in url:
-            scraped_data = await scrape_medium(url)
-        elif 'substack.com' in url:
-            scraped_data = await scrape_substack(url)
-        else:
-            raise ValueError(f"Unsupported URL: {url}")
-        
+        scraped_data = await scrape_url(request.url)
         df = scraper_output_to_df(scraped_data)
         
         logger.info(f"Scraped {len(df)} posts")
         
         if df.empty:
-            raise ValueError(f"No posts were scraped from the URL: {url}")
+            raise ValueError(f"No posts were scraped from the URL: {request.url}. Please check if the URL is correct and accessible.")
 
         # Process each article/post
         results = []
         for _, row in df.iterrows():
             try:
                 processed_text = process_text(row['content'])
-                insights = await generate_insights(processed_text['processed_text'])
-                embedding = await generate_embedding(processed_text['processed_text'])
+                insights = await generate_insights(processed_text)
+                embedding = await generate_embedding(processed_text)
                 analysis = await generate_analysis(processed_text, embedding)
                 results.append(analysis)
             except Exception as e:
                 logger.error(f"Error processing post: {str(e)}")
                 # Continue with the next post instead of breaking the loop
-        
-        logger.info(f"Analyzed {len(results)} posts")
-        
+
         if not results:
-            raise ValueError("No posts were successfully analyzed")
+            raise ValueError("No posts were successfully analyzed. Please try again later or contact support if the issue persists.")
 
         # Combine results
         combined_analysis = {
-            "insights": "\n".join([r['insights'] for r in results]),
-            "writing_style": pd.Series([r['writing_style'] for r in results]).mode().iloc[0] if results else "Unknown",
-            "key_themes": list(set([theme for r in results for theme in r['key_themes']])),
-            "readability_score": sum([r['readability_score'] for r in results]) / len(results) if results else 0,
-            "sentiment": pd.Series([r['sentiment'] for r in results]).mode().iloc[0] if results else "Unknown",
+            "insights": "\n".join([r['insights'] for r in results if 'insights' in r]),
+            "writing_style": pd.Series([r['writing_style'] for r in results if 'writing_style' in r]).mode().iloc[0] if results else "Unknown",
+            "key_themes": list(set([theme for r in results if 'key_themes' in r for theme in r['key_themes']])),
+            "readability_score": sum([r['readability_score'] for r in results if 'readability_score' in r]) / len(results) if results else 0,
+            "sentiment": pd.Series([r['sentiment'] for r in results if 'sentiment' in r]).mode().iloc[0] if results else "Unknown",
             "post_count": len(results)
         }
         
@@ -70,4 +60,5 @@ async def analyze_url(request: AnalysisRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred during analysis")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during analysis. Please try again later or contact support if the issue persists.")
+
