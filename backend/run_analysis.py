@@ -37,10 +37,10 @@ async def process_post(content: str):
         processed_text = process_text(content)
         logger.info(f"Processed text: {processed_text['processed_text'][:100]}...")
 
-        insights = await cached_generate_insights(processed_text['processed_text'])
+        insights = await generate_insights(processed_text['processed_text'])
         logger.info(f"Generated insights: {insights[:100]}...")
 
-        embedding = cached_generate_embedding(processed_text['processed_text'])
+        embedding = await generate_embedding(processed_text['processed_text'])
         logger.info(f"Generated embedding (first 5 values): {embedding[:5]}")
 
         analysis = await generate_analysis(processed_text, embedding)
@@ -56,7 +56,7 @@ async def process_post(content: str):
             "readability_score": 0,
             "sentiment": "Unknown",
         }
-
+    
 async def analyze_file(file_path: str):
     logger.info(f"Analyzing file: {file_path}")
     df = pd.read_csv(file_path)

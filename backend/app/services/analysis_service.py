@@ -11,7 +11,7 @@ import logging
 nltk.download('averaged_perceptron_tagger', quiet=True)
 logger = logging.getLogger(__name__)
 
-async def generate_analysis(processed_text: dict) -> dict:
+async def generate_analysis(processed_text: dict, embedding: list[float]) -> dict:
     logger.info("Generating analysis")
     
     try:
@@ -32,9 +32,6 @@ async def generate_analysis(processed_text: dict) -> dict:
         
         # Generate insights using the LLM
         insights = await generate_insights(processed_text['processed_text'])
-        
-        # Generate embedding
-        embedding = await generate_embedding(processed_text['processed_text'])
         
         similar_texts = []
         if embedding and len(embedding) == 1536:  # Ensure the embedding is the correct length

@@ -1,5 +1,3 @@
-# vector_db.py
-
 from pymilvus import MilvusClient, DataType, FieldSchema, CollectionSchema
 
 client = MilvusClient("milvus_demo.db")
@@ -16,17 +14,30 @@ def create_collection(collection_name="demo_collection", dimension=1536):
     ]
     
     schema = CollectionSchema(fields, description="Demo collection for vector search")
-    client.create_collection(collection_name, schema)
+    client.create_collection(collection_name=collection_name, schema=schema)
+    
+    # Create an index on the vector field
+    index_params = {
+        "metric_type": "L2",
+        "index_type": "IVF_FLAT",
+        "params": {"nlist": 1024}
+    }
+    client.create_index(collection_name, "vector", index_params)
 
 def insert_data(collection_name, data):
     return client.insert(collection_name, data)
 
 def search_vectors(collection_name, query_vectors, limit=5, output_fields=None):
+    search_params = {
+        "metric_type": "L2",
+        "params": {"nprobe": 10},
+    }
     return client.search(
         collection_name=collection_name,
         data=query_vectors,
         limit=limit,
-        output_fields=output_fields
+        output_fields=output_fields,
+        search_params=search_params
     )
 
 # Create the collection when this module is imported
