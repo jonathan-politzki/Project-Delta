@@ -6,17 +6,17 @@ from app.services.text_processor import process_text
 from app.services.llm_service import generate_insights
 from app.services.embedding_service import generate_embedding
 from app.services.analysis_service import generate_analysis
-from app.core.error_handlers import handle_analysis_error
-import pandas as pd
 from app.utils.scraper import scrape_url, scraper_output_to_df
+import pandas as pd
 import logging
-from openai.error import OpenAIError
+from openai import OpenAIError
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.post("/", response_model=AnalysisResponse)
 async def analyze_url(request: AnalysisRequest):
+
     try:
         logger.info(f"Analyzing URL: {request.url}")
         url = request.url

@@ -5,6 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.api.v1.endpoints.analysis import router as analysis_router
+
 app = FastAPI(title="Writer Analysis Tool")
 
 # Set up CORS
@@ -16,7 +20,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Writer Analysis Tool API"}
