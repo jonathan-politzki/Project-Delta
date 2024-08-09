@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 @router.post("/", response_model=AnalysisResponse)
 async def analyze_url(request: AnalysisRequest):
-
     try:
         logger.info(f"Analyzing URL: {request.url}")
         url = request.url
@@ -39,18 +38,25 @@ async def analyze_url(request: AnalysisRequest):
         logger.info(f"Analyzed {len(results)} posts")
         
         # Combine results
+        if not results:
+            raise ValueError("No posts were successfully analyzed")
+
         combined_analysis = {
             "insights": "\n".join([r['insights'] for r in results]),
-            "writing_style": pd.Series([r['writing_style'] for r in results]).mode().iloc[0],
+            "writing_style": pd.Series([r['writing_style'] for r in results]).mode().iloc[0] if results else "Unknown",
             "key_themes": list(set([theme for r in results for theme in r['key_themes']])),
-            "readability_score": sum([r['readability_score'] for r in results]) / len(results),
-            "sentiment": pd.Series([r['sentiment'] for r in results]).mode().iloc[0],
+            "readability_score": sum([r['readability_score'] for r in results]) / len(results) if results else 0,
+            "sentiment": pd.Series([r['sentiment'] for r in results]).mode().iloc[0] if results else "Unknown",
             "post_count": len(results)
         }
         
         logger.info("Analysis completed successfully")
         return AnalysisResponse(**combined_analysis)
 
+    except IndexError as e:
+        logger.error(f"Index error during analysis: {str(e)}")
+        raise HTTPException(status_code=400, detail="No content found to analyze")
+        
     except OpenAIError as e:
         logger.error(f"OpenAI API error: {str(e)}")
         raise HTTPException(status_code=503, detail="Service temporarily unavailable due to API limitations")
