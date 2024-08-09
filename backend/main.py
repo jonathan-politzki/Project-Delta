@@ -23,6 +23,13 @@ app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"]
 async def root():
     return {"message": "Welcome to the Writer Analysis Tool API"}
 
+# creating an endpoint so we dont expose any environment variables to the frontend
+@app.get("/api/config")
+async def get_config():
+    return {
+        "apiUrl": os.getenv("API_URL", "http://localhost:8000")
+    }
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
