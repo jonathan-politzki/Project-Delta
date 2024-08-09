@@ -18,11 +18,17 @@ def create_collection(collection_name="demo_collection", dimension=1536):
     
     # Create an index on the vector field
     index_params = {
+        "field_name": "vector",
         "metric_type": "L2",
         "index_type": "IVF_FLAT",
         "params": {"nlist": 1024}
     }
-    client.create_index(collection_name, "vector", index_params)
+    try:
+        client.create_index(collection_name, index_params)
+        print(f"Successfully created index on collection: {collection_name}")
+    except Exception as e:
+        print(f"Failed to create an index on collection: {collection_name}")
+        print(f"Error: {str(e)}")
 
 def insert_data(collection_name, data):
     return client.insert(collection_name, data)
@@ -35,9 +41,10 @@ def search_vectors(collection_name, query_vectors, limit=5, output_fields=None):
     return client.search(
         collection_name=collection_name,
         data=query_vectors,
+        anns_field="vector",  # Specify the field to search on
+        param=search_params,
         limit=limit,
-        output_fields=output_fields,
-        search_params=search_params
+        output_fields=output_fields
     )
 
 # Create the collection when this module is imported
