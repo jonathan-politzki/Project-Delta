@@ -1,8 +1,19 @@
 from pymilvus import MilvusClient, DataType, FieldSchema, CollectionSchema
+import logging
 
-client = MilvusClient("milvus_demo.db")
+logger = logging.getLogger(__name__)
+
+try:
+    client = MilvusClient("milvus_demo.db")
+except Exception as e:
+    logger.error(f"Failed to connect to Milvus: {str(e)}")
+    client = None
 
 def create_collection(collection_name="demo_collection", dimension=1536):
+    if client is None:
+        logger.warning("Milvus client is not available. Skipping collection creation.")
+        return
+
     if client.has_collection(collection_name):
         client.drop_collection(collection_name)
     
@@ -25,15 +36,21 @@ def create_collection(collection_name="demo_collection", dimension=1536):
     }
     try:
         client.create_index(collection_name, index_params)
-        print(f"Successfully created index on collection: {collection_name}")
+        logger.info(f"Successfully created index on collection: {collection_name}")
     except Exception as e:
-        print(f"Failed to create an index on collection: {collection_name}")
-        print(f"Error: {str(e)}")
+        logger.error(f"Failed to create an index on collection: {collection_name}")
+        logger.error(f"Error: {str(e)}")
 
 def insert_data(collection_name, data):
+    if client is None:
+        logger.warning("Milvus client is not available. Skipping data insertion.")
+        return
     return client.insert(collection_name, data)
 
 def search_vectors(collection_name, query_vectors, limit=5, output_fields=None):
+    if client is None:
+        logger.warning("Milvus client is not available. Skipping vector search.")
+        return []
     search_params = {
         "metric_type": "L2",
         "params": {"nprobe": 10},
@@ -48,4 +65,5 @@ def search_vectors(collection_name, query_vectors, limit=5, output_fields=None):
     )
 
 # Create the collection when this module is imported
-create_collection()
+if client is not None:
+    create_collection()

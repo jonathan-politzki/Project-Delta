@@ -6,7 +6,7 @@ from app.services.text_processor import process_text
 from app.services.llm_service import generate_insights
 from app.services.embedding_service import generate_embedding
 from app.services.analysis_service import generate_analysis
-from app.utils.scraper import scrape_url, scraper_output_to_df
+from app.utils.scraper import scrape_url, scraper_output_to_df, scrape_medium, scrape_substack
 import pandas as pd
 import logging
 from openai import OpenAIError
@@ -19,28 +19,36 @@ async def analyze_url(request: AnalysisRequest):
     try:
         logger.info(f"Analyzing URL: {request.url}")
         url = request.url
-        platform = 'medium' if 'medium.com' in url else 'substack'
-        username = url.split('@')[-1] if platform == 'medium' else url.split('//')[1].split('.')[0]
-        scraped_data = await scrape_url(username, platform)
+        
+        if 'medium.com' in url:
+            scraped_data = await scrape_medium(url)
+        elif 'substack.com' in url:
+            scraped_data = await scrape_substack(url)
+        else:
+            raise ValueError(f"Unsupported URL: {url}")
+        
         df = scraper_output_to_df(scraped_data)
         
         logger.info(f"Scraped {len(df)} posts")
         
+        if df.empty:
+            raise ValueError(f"No posts were scraped from the URL: {url}")
+
         # Process each article/post
         results = []
         for _, row in df.iterrows():
             processed_text = process_text(row['content'])
             insights = await generate_insights(processed_text)
-            embedding = generate_embedding(processed_text)
+            embedding = await generate_embedding(processed_text)  # Now awaiting the async function
             analysis = await generate_analysis(processed_text, embedding)
             results.append(analysis)
         
         logger.info(f"Analyzed {len(results)} posts")
         
-        # Combine results
         if not results:
             raise ValueError("No posts were successfully analyzed")
 
+        # Combine results
         combined_analysis = {
             "insights": "\n".join([r['insights'] for r in results]),
             "writing_style": pd.Series([r['writing_style'] for r in results]).mode().iloc[0] if results else "Unknown",
@@ -53,13 +61,6 @@ async def analyze_url(request: AnalysisRequest):
         logger.info("Analysis completed successfully")
         return AnalysisResponse(**combined_analysis)
 
-    except IndexError as e:
-        logger.error(f"Index error during analysis: {str(e)}")
-        raise HTTPException(status_code=400, detail="No content found to analyze")
-        
-    except OpenAIError as e:
-        logger.error(f"OpenAI API error: {str(e)}")
-        raise HTTPException(status_code=503, detail="Service temporarily unavailable due to API limitations")
     except ValueError as e:
         logger.error(f"Value error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))

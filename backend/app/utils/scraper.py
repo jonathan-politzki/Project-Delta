@@ -3,7 +3,7 @@
 import httpx
 from bs4 import BeautifulSoup
 import feedparser
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlparse, urlunparse
 import asyncio
 from typing import List, Dict, Optional
 import pandas as pd
@@ -118,37 +118,99 @@ class BaseSubstackScraper:
                 logger.error(f"Error scraping post: {e}")
         return posts_data
 
-async def scrape_medium(username: str) -> Dict[str, List[Dict[str, str]]]:
+from urllib.parse import urlparse
+
+async def scrape_medium(url: str) -> Dict[str, List[Dict[str, str]]]:
+    parsed_url = urlparse(url)
+    username = parsed_url.path.strip('/').split('@')[-1].split('/')[0]
     rss_url = f'https://medium.com/feed/@{username}'
+    
+    logger.info(f"Fetching RSS feed from: {rss_url}")
     async with httpx.AsyncClient() as client:
-        response = await client.get(rss_url)
-        feed = feedparser.parse(response.text)
+        try:
+            response = await client.get(rss_url)
+            response.raise_for_status()
+            logger.info(f"RSS feed fetched successfully. Status code: {response.status_code}")
+            feed = feedparser.parse(response.text)
+            logger.info(f"Number of entries in feed: {len(feed.entries)}")
+        except Exception as e:
+            logger.error(f"Error fetching RSS feed: {str(e)}")
+            return {'posts': []}
+
     entries = []
     for post in feed.entries[:MAX_POSTS]:
-        soup = BeautifulSoup(post.content[0].value, 'html.parser')
-        cleaned_text = clean_content(soup.get_text(separator=' ', strip=True))
-        entries.append({
-            'title': clean_content(post.title),
-            'url': post.link,
-            'content': cleaned_text,
-            'date': clean_content(post.published),
-            'subtitle': '',
-            'like_count': 'N/A'
-        })
+        try:
+            soup = BeautifulSoup(post.content[0].value, 'html.parser')
+            cleaned_text = clean_content(soup.get_text(separator=' ', strip=True))
+            entries.append({
+                'title': clean_content(post.title),
+                'url': post.link,
+                'content': cleaned_text,
+                'date': clean_content(post.published),
+                'subtitle': '',
+                'like_count': 'N/A'
+            })
+        except Exception as e:
+            logger.error(f"Error processing post {post.link}: {str(e)}")
+
+    logger.info(f"Scraped {len(entries)} posts from Medium")
     return {'posts': entries}
 
-async def scrape_substack(username: str) -> Dict[str, List[Dict[str, str]]]:
-    scraper = BaseSubstackScraper(f"https://{username}.substack.com/", BASE_DIR_NAME)
-    posts_data = scraper.scrape_posts(MAX_POSTS)
-    return {"posts": posts_data}
+async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
+    parsed_url = urlparse(url)
+    
+    # Ensure the scheme (protocol) is set
+    if not parsed_url.scheme:
+        parsed_url = parsed_url._replace(scheme='https')
+    
+    base_url = urlunparse(parsed_url)
+    
+    logger.info(f"Fetching Substack posts from: {base_url}")
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{base_url}/feed")
+            response.raise_for_status()
+            feed = feedparser.parse(response.text)
+            logger.info(f"Number of entries in feed: {len(feed.entries)}")
+        except Exception as e:
+            logger.error(f"Error fetching Substack feed: {str(e)}")
+            return {'posts': []}
 
-async def scrape_url(username: str, platform: str) -> Dict[str, List[Dict[str, str]]]:
-    if platform.lower() == 'medium':
-        return await scrape_medium(username)
-    elif platform.lower() == 'substack':
-        return await scrape_substack(username)
-    else:
-        raise ValueError("Unsupported platform. Please choose 'medium' or 'substack'.")
+    entries = []
+    for post in feed.entries[:MAX_POSTS]:
+        try:
+            content = post.content[0].value if 'content' in post else post.summary
+            soup = BeautifulSoup(content, 'html.parser')
+            cleaned_text = clean_content(soup.get_text(separator=' ', strip=True))
+            entries.append({
+                'title': clean_content(post.title),
+                'url': post.link,
+                'content': cleaned_text,
+                'date': clean_content(post.published),
+                'subtitle': '',
+                'like_count': 'N/A'
+            })
+        except Exception as e:
+            logger.error(f"Error processing Substack post {post.link}: {str(e)}")
+
+    logger.info(f"Scraped {len(entries)} posts from Substack")
+    return {'posts': entries}
+
+async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
+    try:
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            raise ValueError(f"Invalid URL format: {url}")
+        
+        if 'medium.com' in parsed_url.netloc:
+            return await scrape_medium(url)
+        elif 'substack.com' in parsed_url.netloc:
+            return await scrape_substack(url)
+        else:
+            raise ValueError(f"Unsupported URL: {url}")
+    except Exception as e:
+        logger.error(f"Error scraping URL {url}: {str(e)}")
+        raise
 
 def save_to_csv(data: Dict[str, List[Dict[str, str]]], filename: str):
     os.makedirs(BASE_DIR_NAME, exist_ok=True)

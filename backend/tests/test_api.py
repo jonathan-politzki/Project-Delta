@@ -7,7 +7,9 @@ from main import app
 client = TestClient(app)
 
 def test_analyze_medium_url():
-    response = client.post("/api/v1/analysis/", json={"url": "https://travismay.medium.com/"})
+    response = client.post("/api/v1/analysis/", json={"url": "https://medium.com/@travismay"})
+    if response.status_code != 200:
+        print(f"Error response: {response.json()}")
     assert response.status_code == 200
     data = response.json()
     assert "insights" in data
@@ -27,6 +29,7 @@ def test_analyze_substack_url():
     assert "readability_score" in data
     assert "sentiment" in data
     assert "post_count" in data
+
 
 def test_invalid_url():
     response = client.post("/api/v1/analysis/", json={"url": "https://invalid-url.com"})
