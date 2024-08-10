@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { analyzeUrl } from '../services/api';  // Update this line
+// import { analyzeUrl } from '../services/api';  // Update this line
+// import { analyzeUrl, getAnalysisStatus } from '../services/api';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
-
-
 
 
 const MainPage = () => {
