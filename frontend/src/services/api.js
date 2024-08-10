@@ -19,3 +19,13 @@ export const analyzeUrl = async (url) => {
     throw error;
   }
 };
+
+export const getAnalysisStatus = async (taskId) => {
+  try {
+    const response = await api.get(`/api/v1/analysis/status/${taskId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error in getAnalysisStatus:', error);
+    throw error;
+  }
+};
