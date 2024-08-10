@@ -16,6 +16,7 @@ app = FastAPI(title="Writer Analysis Tool")
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app").split(",")
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
