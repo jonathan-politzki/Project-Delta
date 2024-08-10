@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://project-delta-app-6f4ac4c9390d.herokuapp.com';
+const API_URL = 'https://project-delta-app-6f4ac4c9390d.herokuapp.com';
 
 export const analyzeUrl = async (url) => {
   try {
