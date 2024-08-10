@@ -21,11 +21,13 @@ const MainPage = () => {
       const result = await analyzeUrl(url);
       setAnalysisResult(result);
     } catch (err) {
+      console.error('Error during analysis:', err);
       setError('An error occurred while analyzing the URL. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  };  
+  
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">

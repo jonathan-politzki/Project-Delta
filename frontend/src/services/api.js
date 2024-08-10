@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_URL = 'https://project-delta-app-6f4ac4c9390d.herokuapp.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://project-delta-app-6f4ac4c9390d.herokuapp.com';
 
 export const analyzeUrl = async (url) => {
   try {
@@ -12,11 +12,7 @@ export const analyzeUrl = async (url) => {
     return response.data;
   } catch (error) {
     console.error('Error in analyzeUrl:', error);
-    if (error.response) {
-      console.error('Error response:', error.response.data);
-      console.error('Error status:', error.response.status);
-      console.error('Error headers:', error.response.headers);
-    }
     throw error;
   }
 };
+
