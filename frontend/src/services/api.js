@@ -2,9 +2,8 @@
 
 import axios from 'axios';
 
-let API_URL = 'http://localhost:8000'; // Default to localhost for development
-
 const HEROKU_URL = 'https://project-delta-app-6f4ac4c9390d.herokuapp.com';
+let API_URL = HEROKU_URL;
 
 const getConfig = async () => {
   try {
@@ -17,14 +16,9 @@ const getConfig = async () => {
   }
 };
 
-// Initialize the config
-getConfig();
-
 export const analyzeUrl = async (url) => {
   try {
-    // Ensure config is fetched before making the request
     await getConfig();
-    
     const response = await axios.post(`${API_URL}/api/v1/analysis/`, { url });
     return response.data;
   } catch (error) {
