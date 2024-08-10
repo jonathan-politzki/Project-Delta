@@ -1,6 +1,5 @@
-# backend/app/api/v1/endpoints/analysis.py
-
-from fastapi import APIRouter, HTTPException
+import uuid
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from app.schemas.analysis_schemas import AnalysisRequest, AnalysisResponse
 from app.services.text_processor import process_text
 from app.services.llm_service import generate_insights
@@ -13,17 +12,25 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.post("/", response_model=AnalysisResponse)
-async def analyze_url(request: AnalysisRequest):
+# In-memory storage for analysis results (replace with a database in production)
+analysis_results = {}
+
+@router.post("/", response_model=dict)
+async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTasks):
+    task_id = str(uuid.uuid4())
+    background_tasks.add_task(analyze_url_background, request.url, task_id)
+    return {"task_id": task_id, "status": "processing"}
+
+async def analyze_url_background(url: str, task_id: str):
     try:
-        logger.info(f"Analyzing URL: {request.url}")
-        scraped_data = await scrape_url(request.url)
+        logger.info(f"Analyzing URL: {url}")
+        scraped_data = await scrape_url(url)
         df = scraper_output_to_df(scraped_data)
         
         logger.info(f"Scraped {len(df)} posts")
         
         if df.empty:
-            raise ValueError(f"No posts were scraped from the URL: {request.url}. Please check if the URL is correct and accessible.")
+            raise ValueError(f"No posts were scraped from the URL: {url}. Please check if the URL is correct and accessible.")
 
         # Process each article/post
         results = []
@@ -52,11 +59,13 @@ async def analyze_url(request: AnalysisRequest):
         }
         
         logger.info("Analysis completed successfully")
-        return AnalysisResponse(**combined_analysis)
-
-    except ValueError as e:
-        logger.error(f"Value error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        analysis_results[task_id] = {"status": "completed", "result": combined_analysis}
     except Exception as e:
-        logger.error(f"Unexpected error during analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred during analysis.")
+        logger.error(f"Error in analyze_url_background: {str(e)}")
+        analysis_results[task_id] = {"status": "error", "message": str(e)}
+
+@router.get("/status/{task_id}")
+async def get_analysis_status(task_id: str):
+    if task_id not in analysis_results:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return analysis_results[task_id]

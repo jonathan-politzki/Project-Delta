@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { analyzeUrl } from '../services/api';  // Update this line
+import { analyzeUrl, getAnalysisStatus } from '../services/api';
+
 
 
 
@@ -12,6 +14,8 @@ const MainPage = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [taskId, setTaskId] = useState(null);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,11 +23,8 @@ const MainPage = () => {
     setError(null);
     try {
       const result = await analyzeUrl(url);
-      if (result.status === "processing") {
-        pollForResults(result.task_id);
-      } else {
-        setAnalysisResult(result);
-      }
+      setTaskId(result.task_id);
+      pollForResults(result.task_id);
     } catch (err) {
       console.error('Error during analysis:', err);
       setError('An error occurred while analyzing the URL. Please try again.');
@@ -31,14 +32,17 @@ const MainPage = () => {
       setIsLoading(false);
     }
   };
-  
+
   const pollForResults = async (taskId) => {
     const pollInterval = setInterval(async () => {
       try {
         const result = await getAnalysisStatus(taskId);
         if (result.status === "completed") {
           clearInterval(pollInterval);
-          setAnalysisResult(result);
+          setAnalysisResult(result.result);
+        } else if (result.status === "error") {
+          clearInterval(pollInterval);
+          setError(result.message || 'An error occurred during analysis.');
         }
       } catch (err) {
         console.error('Error polling for results:', err);
@@ -47,6 +51,7 @@ const MainPage = () => {
       }
     }, 5000); // Poll every 5 seconds
   };
+
   
     
 
