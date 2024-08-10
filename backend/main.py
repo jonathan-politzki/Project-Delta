@@ -11,11 +11,12 @@ app = FastAPI(title="Writer Analysis Tool")
 # Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
+    allow_origins=[os.getenv("CORS_ORIGINS", "http://localhost:3000")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
 
@@ -33,3 +34,6 @@ async def get_config():
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+
+
+    
