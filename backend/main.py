@@ -14,10 +14,11 @@ print("API_URL:", os.getenv("API_URL"))
 
 app = FastAPI(title="Writer Analysis Tool")
 
-# Set up CORS
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # This allows all origins
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
