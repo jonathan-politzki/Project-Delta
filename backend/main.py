@@ -5,6 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints.analysis import router as analysis_router
 import os
+import nltk
+nltk.data.path.append('/app/nltk_data')
+
+
 print("CORS_ORIGINS:", os.getenv("CORS_ORIGINS"))
 print("API_URL:", os.getenv("API_URL"))
 
@@ -13,7 +17,7 @@ app = FastAPI(title="Writer Analysis Tool")
 # Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
