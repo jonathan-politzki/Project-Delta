@@ -1,10 +1,8 @@
 {
-  "name": "project-delta",
-  "version": "1.0.0",
   "private": true,
+  "workspaces": ["frontend"],
   "scripts": {
-    "build": "cd frontend && npm run vercel-build",
-    "start": "cd frontend && npm start"
-  },
-  "workspaces": ["frontend", "backend"]
+    "build": "cd frontend && npm install && npm run build"
+  }
 }
+
