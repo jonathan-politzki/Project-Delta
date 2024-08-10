@@ -9,9 +9,11 @@ except Exception as e:
     logger.error(f"Failed to connect to Milvus: {str(e)}")
     client = None
 
+USE_MILVUS = False
+
 def create_collection(collection_name="demo_collection", dimension=1536):
-    if client is None:
-        logger.warning("Milvus client is not available. Skipping collection creation.")
+    if not USE_MILVUS:
+        logger.info("Milvus operations are disabled.")
         return
 
     if client.has_collection(collection_name):
@@ -42,15 +44,15 @@ def create_collection(collection_name="demo_collection", dimension=1536):
         logger.error(f"Error: {str(e)}")
 
 def insert_data(collection_name, data):
-    if client is None:
-        logger.warning("Milvus client is not available. Skipping data insertion.")
+    if not USE_MILVUS:
+        logger.info("Milvus operations are disabled.")
         return
-    return client.insert(collection_name, data)
 
 def search_vectors(collection_name, query_vectors, limit=5, output_fields=None):
-    if client is None:
-        logger.warning("Milvus client is not available. Skipping vector search.")
+    if not USE_MILVUS:
+        logger.info("Milvus operations are disabled.")
         return []
+
     search_params = {
         "metric_type": "L2",
         "params": {"nprobe": 10},
@@ -68,6 +70,7 @@ def search_vectors(collection_name, query_vectors, limit=5, output_fields=None):
         logger.error(f"Error during vector search: {str(e)}")
         return []
     
-# Create the collection when this module is imported
-if client is not None:
-    create_collection()
+# Create the collection when this module is imported, commented out for now
+# if client is not None:
+#     create_collection()
+

@@ -14,7 +14,7 @@ print("API_URL:", os.getenv("API_URL"))
 
 app = FastAPI()
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app,https://project-delta-g07nkry68-jonathan-politzkis-projects.vercel.app").split(",")
 
 app.add_middleware(
     CORSMiddleware,
