@@ -14,7 +14,8 @@ print("API_URL:", os.getenv("API_URL"))
 
 app = FastAPI()
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app,https://project-delta-g07nkry68-jonathan-politzkis-projects.vercel.app").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app").split(",")
+CORS_ORIGINS.append("https://project-delta-g07nkry68-jonathan-politzkis-projects.vercel.app")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +24,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
 
@@ -37,7 +39,17 @@ async def get_config():
         "apiUrl": os.getenv("API_URL", "http://localhost:8000")
     }
 
+@app.middleware("http")
+async def log_requests(request, call_next):
+    print(f"Received request: {request.method} {request.url}")
+    print(f"Headers: {request.headers}")
+    response = await call_next(request)
+    print(f"Response status: {response.status_code}")
+    return response
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
+
 
