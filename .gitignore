@@ -1,3 +1,5 @@
+#.gitignore
+
 # Node modules and logs
 frontend/node_modules/
 frontend/npm-debug.log
