@@ -12,18 +12,17 @@ nltk.data.path.append('/app/nltk_data')
 print("CORS_ORIGINS:", os.getenv("CORS_ORIGINS"))
 print("API_URL:", os.getenv("API_URL"))
 
-app = FastAPI(title="Writer Analysis Tool")
+app = FastAPI()
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app").split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://project-delta-lake.vercel.app", "http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
 
 app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
 

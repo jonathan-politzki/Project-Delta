@@ -11,7 +11,7 @@ async def generate_insights(text: str) -> str:
     if LLM_PROVIDER == "openai":
         try:
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",  # goddamn gpt 4 is noticeably more expensive than 4o mini
+                model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a writing analyst. Provide insights on the writing style and key themes of the given text."},
                     {"role": "user", "content": text}
@@ -24,3 +24,4 @@ async def generate_insights(text: str) -> str:
             return f"Error generating insights: {str(e)}"
     else:
         raise ValueError(f"Unsupported LLM provider: {LLM_PROVIDER}")
+

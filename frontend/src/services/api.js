@@ -7,9 +7,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://project-delta-app-6f4a
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: false,
+  timeout: 300000, // 5 minutes
 });
-
-
 
 export const analyzeUrl = async (url) => {
   try {
