@@ -6,7 +6,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://project-delta-app-6f4a
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
+  withCredentials: false,  // Change this to false
 });
 
 export const analyzeUrl = async (url) => {
@@ -18,4 +18,3 @@ export const analyzeUrl = async (url) => {
     throw error;
   }
 };
-

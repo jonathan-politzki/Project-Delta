@@ -1,7 +1,7 @@
 # backend/app/api/v1/endpoints/analysis.py
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
-from app.schemas.analysis_schemas import AnalysisRequest, AnalysisResponse, AnalysisStatus
+from app.schemas.analysis_schemas import AnalysisRequest, AnalysisResponse
 from app.services.text_processor import process_text
 from app.services.llm_service import generate_insights
 from app.services.embedding_service import generate_embedding
