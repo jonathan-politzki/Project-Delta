@@ -28,7 +28,7 @@
     "build": "npx postcss src/index.css -o src/tailwind.css && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-  
+    
   },
   "eslintConfig": {
     "extends": [
