@@ -60,5 +60,6 @@ async def analyze_url(request: AnalysisRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred during analysis. Please try again later or contact support if the issue persists.")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during analysis.")
+
 
