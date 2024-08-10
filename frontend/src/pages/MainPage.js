@@ -19,15 +19,37 @@ const MainPage = () => {
     setError(null);
     try {
       const result = await analyzeUrl(url);
-      setAnalysisResult(result);
+      if (result.status === "processing") {
+        pollForResults(result.task_id);
+      } else {
+        setAnalysisResult(result);
+      }
     } catch (err) {
       console.error('Error during analysis:', err);
       setError('An error occurred while analyzing the URL. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };  
+  };
   
+  const pollForResults = async (taskId) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const result = await getAnalysisStatus(taskId);
+        if (result.status === "completed") {
+          clearInterval(pollInterval);
+          setAnalysisResult(result);
+        }
+      } catch (err) {
+        console.error('Error polling for results:', err);
+        clearInterval(pollInterval);
+        setError('An error occurred while retrieving analysis results. Please try again.');
+      }
+    }, 5000); // Poll every 5 seconds
+  };
+  
+  
+    
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">

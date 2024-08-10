@@ -1,23 +1,17 @@
 # backend/app/api/v1/endpoints/analysis.py
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, HTTPException
 from app.schemas.analysis_schemas import AnalysisRequest, AnalysisResponse
 from app.services.text_processor import process_text
 from app.services.llm_service import generate_insights
 from app.services.embedding_service import generate_embedding
 from app.services.analysis_service import generate_analysis
-from app.utils.scraper import scrape_url, scraper_output_to_df, scrape_medium, scrape_substack
+from app.utils.scraper import scrape_url, scraper_output_to_df
 import pandas as pd
 import logging
-from openai import OpenAIError
-# from app.services.analysis_service import analyze_url_background
-import uuid
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-# In-memory storage for analysis results (replace with a database in production)
-analysis_results = {}
 
 @router.post("/", response_model=AnalysisResponse)
 async def analyze_url(request: AnalysisRequest):
