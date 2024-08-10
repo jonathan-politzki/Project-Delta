@@ -14,7 +14,7 @@ print("API_URL:", os.getenv("API_URL"))
 
 app = FastAPI(title="Writer Analysis Tool")
 
-# Update CORS settings
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://project-delta-lake.vercel.app", "http://localhost:3000"],
@@ -22,6 +22,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])

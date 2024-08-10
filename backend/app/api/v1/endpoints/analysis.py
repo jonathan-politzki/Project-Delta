@@ -10,7 +10,7 @@ from app.utils.scraper import scrape_url, scraper_output_to_df, scrape_medium, s
 import pandas as pd
 import logging
 from openai import OpenAIError
-from app.services.analysis_service import analyze_url_background
+# from app.services.analysis_service import analyze_url_background
 import uuid
 
 router = APIRouter()
