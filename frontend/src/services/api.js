@@ -4,17 +4,6 @@ import axios from 'axios';
 
 const API_URL = 'https://project-delta-app-6f4ac4c9390d.herokuapp.com';
 
-const getConfig = async () => {
-  try {
-    const response = await axios.get(`${HEROKU_URL}/api/config`);
-    API_URL = response.data.apiUrl;
-  } catch (error) {
-    console.error('Failed to fetch config:', error);
-    // Fallback to the Heroku URL if config fetch fails
-    API_URL = HEROKU_URL;
-  }
-};
-
 export const analyzeUrl = async (url) => {
   try {
     console.log('Sending request to:', `${API_URL}/api/v1/analysis/`);

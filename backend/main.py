@@ -16,9 +16,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://project-delta-lake.vercel.app",
-        "https://project-delta-ldh7zuvio-jonathan-politzkis-projects.vercel.app",
-        "https://context-file-creator.vercel.app",
-        "https://context-gen-app-980c368d206f.herokuapp.com",
+        "https://project-delta-n4z9gvy64-jonathan-politzkis-projects.vercel.app",
+        "https://project-delta-app-6f4ac4c9390d.herokuapp.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
