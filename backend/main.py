@@ -16,14 +16,13 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://project-delta-lake.vercel.app",
-        "https://project-delta-n4z9gvy64-jonathan-politzkis-projects.vercel.app",
+        "https://project-delta-qfhjzahmp-jonathan-politzkis-projects.vercel.app",
         "https://project-delta-app-6f4ac4c9390d.herokuapp.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["analysis"])
 
