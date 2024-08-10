@@ -1,1 +1,1 @@
-echo "python-3.9.16" > runtime.txt
+python-3.9.16
