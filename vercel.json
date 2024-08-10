@@ -1,15 +1,15 @@
 {
     "version": 2,
     "builds": [
-        {
-            "src": "frontend/package.json",
-            "use": "@vercel/node"
-        }
+      {
+        "src": "package.json",
+        "use": "@vercel/node",
+        "config": { "distDir": "build" }
+      }
     ],
     "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "frontend/$1"
-        }
+      { "src": "/(.*)", "dest": "/build/$1" },
+      { "handle": "filesystem" },
+      { "src": "/.*", "dest": "/build/index.html" }
     ]
-}
+  }
