@@ -1,4 +1,4 @@
-#.gitignore
+#.gitignore # frontend works now
 
 # Node modules and logs
 frontend/node_modules/
