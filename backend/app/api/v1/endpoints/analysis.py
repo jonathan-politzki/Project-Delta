@@ -65,9 +65,10 @@ async def analyze_url_background(url: str, task_id: str):
     except Exception as e:
         logger.error(f"Error in analyze_url_background: {str(e)}")
         analysis_results[task_id] = {"status": "error", "message": str(e)}
-
+        
 @router.get("/status/{task_id}")
 async def get_analysis_status(task_id: str):
     if task_id not in analysis_results:
         raise HTTPException(status_code=404, detail="Task not found")
     return analysis_results[task_id]
+

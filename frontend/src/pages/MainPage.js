@@ -42,6 +42,9 @@ const MainPage = () => {
         } else if (result.status === "error") {
           clearInterval(pollInterval);
           setError(result.message || 'An error occurred during analysis.');
+        } else if (result.status === "processing") {
+          // Task is still processing, continue polling
+          console.log("Analysis still in progress...");
         }
       } catch (err) {
         console.error('Error polling for results:', err);
@@ -50,9 +53,6 @@ const MainPage = () => {
       }
     }, 5000); // Poll every 5 seconds
   };
-
-  
-    
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">

@@ -6,7 +6,7 @@ beautifulsoup4==4.10.0
 pandas==2.2.2
 nltk==3.6.3
 textstat==0.7.2
-openai==1.40.2
+openai==1.40.3
 pymilvus==2.4.4
 feedparser==6.0.10
 requests==2.26.0
