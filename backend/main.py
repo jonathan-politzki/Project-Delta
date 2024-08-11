@@ -7,12 +7,12 @@ from app.api.v1.endpoints.analysis import router as analysis_router
 
 app = FastAPI(title="Writer Analysis Tool")
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://project-delta-lake.vercel.app").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "https://project-delta-anavc5x6c-jonathan-politzkis-projects.vercel.app/").split(",")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
