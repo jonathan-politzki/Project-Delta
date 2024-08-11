@@ -33,10 +33,14 @@ const MainPage = () => {
   };
 
   const pollForResults = async (taskId) => {
+    let pollCount = 0;
+    const maxPolls = 60; // Poll for up to 5 minutes (60 * 5 seconds)
+  
     const pollInterval = setInterval(async () => {
       try {
         const result = await getAnalysisStatus(taskId);
-        console.log("Polling result:", result);  // Add this line for debugging
+        console.log("Polling result:", result);
+        
         if (result.status === "completed") {
           clearInterval(pollInterval);
           setAnalysisResult(result.result);
@@ -45,13 +49,18 @@ const MainPage = () => {
           clearInterval(pollInterval);
           setError(result.message || 'An error occurred during analysis.');
           setIsLoading(false);
-        } else if (result.status === "processing") {
-          // Task is still processing, continue polling
-          console.log("Analysis still in progress...");
         } else if (result.status === "not_found") {
           clearInterval(pollInterval);
           setError('Analysis task not found. Please try again.');
           setIsLoading(false);
+        } else if (result.status === "processing") {
+          console.log("Analysis still in progress...");
+          pollCount++;
+          if (pollCount >= maxPolls) {
+            clearInterval(pollInterval);
+            setError('Analysis is taking longer than expected. Please try again later.');
+            setIsLoading(false);
+          }
         }
       } catch (err) {
         console.error('Error polling for results:', err);
@@ -61,6 +70,7 @@ const MainPage = () => {
       }
     }, 5000); // Poll every 5 seconds
   };
+  
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">

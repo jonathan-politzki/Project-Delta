@@ -2,6 +2,8 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints.analysis import router as analysis_router
+from fastapi import FastAPI, BackgroundTasks
+from starlette.background import BackgroundTask
 import nltk
 nltk.data.path.append('./nltk_data')
 import uvicorn
@@ -27,11 +29,10 @@ async def root():
     return {"message": "Welcome to the Writer Analysis Tool API"}
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Received request: {request.method} {request.url}")
-    logger.info(f"Request headers: {request.headers}")
+async def add_process_time_header(request, call_next):
     response = await call_next(request)
-    logger.info(f"Returning response: {response.status_code}")
+    if isinstance(response.background, BackgroundTask):
+        response.background.timeout = 600  # Set timeout to 10 minutes
     return response
 
 @app.options("/{full_path:path}")
