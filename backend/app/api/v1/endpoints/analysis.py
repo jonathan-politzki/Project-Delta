@@ -25,8 +25,8 @@ async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTask
 
 async def analyze_url_background(url: str, task_id: str):
     try:
-        logger.info(f"Analyzing URL: {url}")
-        analysis_results[task_id] = {"status": "processing"}  # Add this line
+        logger.info(f"Starting background analysis for task {task_id}, URL: {url}")
+        analysis_results[task_id] = {"status": "processing"}
         scraped_data = await scrape_url(url)
         df = scraper_output_to_df(scraped_data)
         
@@ -61,13 +61,20 @@ async def analyze_url_background(url: str, task_id: str):
             "post_count": len(results)
         }
         
-        logger.info("Analysis completed successfully")
+        logger.info(f"Analysis completed for task {task_id}")
         analysis_results[task_id] = {"status": "completed", "result": combined_analysis}
     except Exception as e:
-        logger.error(f"Error in analyze_url_background: {str(e)}")
+        logger.error(f"Error in analyze_url_background for task {task_id}: {str(e)}")
         analysis_results[task_id] = {"status": "error", "message": str(e)}
 
     logger.info(f"Final status for task {task_id}: {analysis_results[task_id]['status']}")
+
+@router.post("/", response_model=dict)
+async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTasks):
+    task_id = str(uuid.uuid4())
+    analysis_results[task_id] = {"status": "processing"}  # Initialize the task
+    background_tasks.add_task(analyze_url_background, request.url, task_id)
+    return {"task_id": task_id, "status": "processing"}
 
 @router.get("/status/{task_id}")
 async def get_analysis_status(task_id: str):
@@ -75,6 +82,6 @@ async def get_analysis_status(task_id: str):
     logger.info(f"Current analysis_results: {analysis_results}")
     if task_id not in analysis_results:
         logger.warning(f"Task not found: {task_id}")
-        raise HTTPException(status_code=404, detail="Task not found")
+        return {"status": "not_found"}  # Return a status instead of raising an exception
     logger.info(f"Returning status for task {task_id}: {analysis_results[task_id]}")
     return analysis_results[task_id]
