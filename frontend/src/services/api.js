@@ -4,11 +4,7 @@ import axios from 'axios';
 
 // const API_URL = process.env.REACT_APP_API_URL || 'https://project-delta-app-6f4ac4c9390d.herokuapp.com';
 
-<<<<<<< HEAD
-const API_URL = 'http://127.0.0.1:8000' 
-=======
 const API_URL = 'http://127.0.0.1:8000';
->>>>>>> working-branch
 
 const api = axios.create({
   baseURL: API_URL,
