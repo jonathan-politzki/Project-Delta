@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints.analysis import router as analysis_router
 import nltk
-nltk.data.path.append('./nltk_data')
+nltk.data.path.append('./nltk.txt')
 
 app = FastAPI(title="Writer Analysis Tool")
 
