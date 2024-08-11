@@ -28,4 +28,3 @@ export const getAnalysisStatus = async (taskId) => {
     throw error;
   }
 };
-
