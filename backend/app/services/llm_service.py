@@ -1,5 +1,3 @@
-# llm_service.py
-
 from openai import AsyncOpenAI
 from app.core.config import LLM_PROVIDER, OPENAI_API_KEY
 import logging
@@ -12,10 +10,14 @@ async def generate_insights(text: str) -> str:
         raise ValueError(f"Unsupported LLM provider: {LLM_PROVIDER}")
 
     try:
+        # Check if text is a string, if not, convert it to a string
+        if not isinstance(text, str):
+            text = str(text)
+        
         logger.info(f"Generating insights for text: {text[:100]}...")  # Log first 100 chars
 
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",  # Make sure this is the correct model name
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a writing analyst. Provide insights on the writing style and key themes of the given text."},
                 {"role": "user", "content": text}
@@ -23,8 +25,13 @@ async def generate_insights(text: str) -> str:
             temperature=0.1
         )
 
-        logger.info(f"LLM response received. First 100 chars: {response.choices[0].message.content[:100]}...")
-        return response.choices[0].message.content
+        if response and response.choices and len(response.choices) > 0:
+            result = response.choices[0].message.content
+            logger.info(f"LLM response received. First 100 chars: {result[:100]}...")
+            return result
+        else:
+            logger.error("No choices returned in response.")
+            return "Error: No insights generated."
 
     except Exception as e:
         logger.error(f"Error in generate_insights: {e.__class__.__name__}: {str(e)}")

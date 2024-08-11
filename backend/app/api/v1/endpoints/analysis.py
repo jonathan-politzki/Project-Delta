@@ -26,6 +26,7 @@ async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTask
 async def analyze_url_background(url: str, task_id: str):
     try:
         logger.info(f"Analyzing URL: {url}")
+        analysis_results[task_id] = {"status": "processing"}  # Add this line
         scraped_data = await scrape_url(url)
         df = scraper_output_to_df(scraped_data)
         
@@ -65,10 +66,15 @@ async def analyze_url_background(url: str, task_id: str):
     except Exception as e:
         logger.error(f"Error in analyze_url_background: {str(e)}")
         analysis_results[task_id] = {"status": "error", "message": str(e)}
-        
+
+    logger.info(f"Final status for task {task_id}: {analysis_results[task_id]['status']}")
+
 @router.get("/status/{task_id}")
 async def get_analysis_status(task_id: str):
+    logger.info(f"Checking status for task: {task_id}")
+    logger.info(f"Current analysis_results: {analysis_results}")
     if task_id not in analysis_results:
+        logger.warning(f"Task not found: {task_id}")
         raise HTTPException(status_code=404, detail="Task not found")
+    logger.info(f"Returning status for task {task_id}: {analysis_results[task_id]}")
     return analysis_results[task_id]
-

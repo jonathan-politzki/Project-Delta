@@ -36,12 +36,15 @@ const MainPage = () => {
     const pollInterval = setInterval(async () => {
       try {
         const result = await getAnalysisStatus(taskId);
+        console.log("Polling result:", result);  // Add this line for debugging
         if (result.status === "completed") {
           clearInterval(pollInterval);
           setAnalysisResult(result.result);
+          setIsLoading(false);
         } else if (result.status === "error") {
           clearInterval(pollInterval);
           setError(result.message || 'An error occurred during analysis.');
+          setIsLoading(false);
         } else if (result.status === "processing") {
           // Task is still processing, continue polling
           console.log("Analysis still in progress...");
@@ -50,9 +53,12 @@ const MainPage = () => {
         console.error('Error polling for results:', err);
         clearInterval(pollInterval);
         setError('An error occurred while retrieving analysis results. Please try again.');
+        setIsLoading(false);
       }
     }, 5000); // Poll every 5 seconds
   };
+  
+  
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
