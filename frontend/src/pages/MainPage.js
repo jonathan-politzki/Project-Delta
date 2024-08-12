@@ -6,16 +6,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
 
+const LoadingBar = ({ progress }) => (
+  <div className="w-full bg-gray-700 rounded-full h-2.5 mb-4">
+    <div 
+      className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+      style={{ width: `${progress}%` }}
+    ></div>
+  </div>
+);
+
 const MainPage = () => {
   const [url, setUrl] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [totalEssays, setTotalEssays] = useState(10); // Default to 10 essays
 
   useEffect(() => {
     if (showConfetti) {
-      const timer = setTimeout(() => setShowConfetti(false), 5000); // Stop confetti after 5 seconds
+      const timer = setTimeout(() => setShowConfetti(false), 5000);
       return () => clearTimeout(timer);
     }
   }, [showConfetti]);
@@ -25,9 +36,11 @@ const MainPage = () => {
     setIsLoading(true);
     setError(null);
     setAnalysisResult(null);
+    setProgress(0);
 
     try {
       const result = await analyzeUrl(url);
+      setTotalEssays(result.total_essays || 10);
       await pollForResults(result.task_id);
     } catch (err) {
       console.error('Error during analysis:', err);
@@ -42,16 +55,25 @@ const MainPage = () => {
     const maxAttempts = 60; // 5 minutes total
     let attempts = 0;
 
+    const updateProgress = (current, total) => {
+      // Logarithmic progress function
+      const progress = (Math.log(current + 1) / Math.log(total + 1)) * 100;
+      setProgress(Math.min(progress, 99)); // Cap at 99% until complete
+    };
+
     while (attempts < maxAttempts) {
       try {
         const result = await getAnalysisStatus(taskId);
         
         if (result.status === 'completed') {
           setAnalysisResult(result.result);
-          setShowConfetti(true); // Trigger confetti
+          setProgress(100);
+          setShowConfetti(true);
           return;
         } else if (result.status === 'error') {
           throw new Error(result.message || 'An error occurred during analysis.');
+        } else if (result.status === 'processing') {
+          updateProgress(result.essays_analyzed || 0, totalEssays);
         }
         
         attempts++;
@@ -63,10 +85,10 @@ const MainPage = () => {
     }
 
     setError('Analysis timed out. Please try again later.');
-  }, []);
+  }, [totalEssays]);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
       {showConfetti && <ReactConfetti />}
       <nav className="absolute top-0 left-0 right-0 p-4">
         <ul className="flex space-x-4">
@@ -78,7 +100,7 @@ const MainPage = () => {
         <h1 className="text-4xl font-bold mb-2">Writer Analysis Tool</h1>
         <p>Get insights into your writing style</p>
       </div>
-      <form onSubmit={handleSubmit} className="w-full max-w-md">
+      <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
         <div className="flex items-center border-b border-white py-2">
           <input
             className="appearance-none bg-transparent border-none w-full text-white mr-3 py-1 px-2 leading-tight focus:outline-none"
@@ -101,9 +123,10 @@ const MainPage = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-4 text-center"
+          className="w-full max-w-md text-center"
         >
-          <p className="text-gray-300">Analysis in progress. This may take a few minutes...</p>
+          <LoadingBar progress={progress} />
+          <p className="text-gray-300 mt-2">Analysis in progress. This may take a few minutes...</p>
         </motion.div>
       )}
 
