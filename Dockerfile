@@ -11,7 +11,7 @@ COPY backend ./backend
 
 # Copy nltk.txt and download NLTK data
 COPY nltk.txt .
-RUN python -m nltk.downloader -d /usr/local/share/nltk_data $(cat nltk.txt)
+RUN python -c "import nltk; nltk.download([line.strip() for line in open('nltk.txt')], quiet=True)"
 
 # Set the working directory to the backend folder
 WORKDIR /app/backend
