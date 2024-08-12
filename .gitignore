@@ -32,3 +32,11 @@ backend/.env
 .idea/
 .vscode/
 .vercel
+
+**pycache**
+*.pyc
+backend/back_env/
+frontend/node_modules/
+frontend/build/
+
+
