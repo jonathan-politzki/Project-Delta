@@ -10,6 +10,7 @@ from app.services.analysis_service import generate_analysis
 from app.utils.scraper import scrape_url, scraper_output_to_df
 import pandas as pd
 import logging
+from urllib.parse import urlparse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -20,8 +21,23 @@ analysis_results = {}
 @router.post("/", response_model=dict)
 async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTasks):
     task_id = str(uuid.uuid4())
-    background_tasks.add_task(analyze_url_background, request.url, task_id)
-    return {"task_id": task_id, "status": "processing"}
+    analysis_results[task_id] = {"status": "processing"}  # Initialize the task
+    
+    try:
+        # Validate and normalize the URL
+        parsed_url = urlparse(str(request.url))
+        if not parsed_url.scheme or not parsed_url.netloc:
+            raise ValueError("Invalid URL")
+        normalized_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
+        if parsed_url.query:
+            normalized_url += f"?{parsed_url.query}"
+        
+        background_tasks.add_task(analyze_url_background, normalized_url, task_id)
+        return {"task_id": task_id, "status": "processing"}
+    except Exception as e:
+        logger.error(f"Error processing URL for task {task_id}: {str(e)}")
+        analysis_results[task_id] = {"status": "error", "message": str(e)}
+        return {"task_id": task_id, "status": "error", "message": "Invalid URL provided"}
 
 async def analyze_url_background(url: str, task_id: str):
     try:
