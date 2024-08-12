@@ -1,76 +1,59 @@
 // frontend/src/pages/MainPage.js
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-// import { analyzeUrl } from '../services/api';  // Update this line
-// import { analyzeUrl, getAnalysisStatus } from '../services/api';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
-
 
 const MainPage = () => {
   const [url, setUrl] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [taskId, setTaskId] = useState(null);
 
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setAnalysisResult(null);
+
     try {
       const result = await analyzeUrl(url);
-      setTaskId(result.task_id);
-      pollForResults(result.task_id);
+      await pollForResults(result.task_id);
     } catch (err) {
       console.error('Error during analysis:', err);
       setError('An error occurred while analyzing the URL. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [url]);
 
-  const pollForResults = async (taskId) => {
-    let pollCount = 0;
-    const maxPolls = 60; // Poll for up to 5 minutes (60 * 5 seconds)
-  
-    const pollInterval = setInterval(async () => {
+  const pollForResults = useCallback(async (taskId) => {
+    const pollInterval = 5000; // 5 seconds
+    const maxAttempts = 60; // 5 minutes total
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
       try {
         const result = await getAnalysisStatus(taskId);
-        console.log("Polling result:", result);
         
-        if (result.status === "completed") {
-          clearInterval(pollInterval);
+        if (result.status === 'completed') {
           setAnalysisResult(result.result);
-          setIsLoading(false);
-        } else if (result.status === "error") {
-          clearInterval(pollInterval);
-          setError(result.message || 'An error occurred during analysis.');
-          setIsLoading(false);
-        } else if (result.status === "not_found") {
-          clearInterval(pollInterval);
-          setError('Analysis task not found. Please try again.');
-          setIsLoading(false);
-        } else if (result.status === "processing") {
-          console.log("Analysis still in progress...");
-          pollCount++;
-          if (pollCount >= maxPolls) {
-            clearInterval(pollInterval);
-            setError('Analysis is taking longer than expected. Please try again later.');
-            setIsLoading(false);
-          }
+          return;
+        } else if (result.status === 'error') {
+          throw new Error(result.message || 'An error occurred during analysis.');
         }
+        
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
       } catch (err) {
-        console.error('Error polling for results:', err);
-        clearInterval(pollInterval);
-        setError('An error occurred while retrieving analysis results. Please try again.');
-        setIsLoading(false);
+        setError(err.message);
+        return;
       }
-    }, 5000); // Poll every 5 seconds
-  };
-  
+    }
+
+    setError('Analysis timed out. Please try again later.');
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
@@ -103,6 +86,16 @@ const MainPage = () => {
         </div>
       </form>
       
+      {isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-4 text-center"
+        >
+          <p className="text-yellow-300">Analysis in progress. This may take a few minutes...</p>
+        </motion.div>
+      )}
+
       <AnimatePresence>
         {analysisResult && (
           <motion.div
