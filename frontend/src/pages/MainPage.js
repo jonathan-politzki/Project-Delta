@@ -20,6 +20,7 @@ const MainPage = () => {
   const [error, setError] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     if (showConfetti) {
@@ -34,6 +35,7 @@ const MainPage = () => {
     setError(null);
     setAnalysisResult(null);
     setProgress(0);
+    setIsExpanded(false);
 
     try {
       const result = await analyzeUrl(url);
@@ -64,6 +66,7 @@ const MainPage = () => {
           setAnalysisResult(result.result);
           setProgress(100);
           setShowConfetti(true);
+          setIsExpanded(true);
           return;
         } else if (result.status === 'error') {
           throw new Error(result.message || 'An error occurred during analysis.');
@@ -91,7 +94,11 @@ const MainPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
+    <motion.div 
+      className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4"
+      animate={{ height: isExpanded ? 'auto' : '100vh' }}
+      transition={{ duration: 0.5 }}
+    >
       {showConfetti && <ReactConfetti />}
       <nav className="absolute top-0 left-0 right-0 p-4">
         <ul className="flex space-x-4">
@@ -161,7 +168,7 @@ const MainPage = () => {
       {error && (
         <p className="text-red-500 mt-4">{error}</p>
       )}
-    </div>
+    </motion.div>
   );
 };
 
