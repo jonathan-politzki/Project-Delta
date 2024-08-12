@@ -66,7 +66,7 @@ const MainPage = () => {
           setAnalysisResult(result.result);
           setProgress(100);
           setShowConfetti(true);
-          setIsExpanded(true);
+          setTimeout(() => setIsExpanded(true), 1000); // Delay expansion to allow confetti to be visible
           return;
         } else if (result.status === 'error') {
           throw new Error(result.message || 'An error occurred during analysis.');
@@ -95,13 +95,9 @@ const MainPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-hidden">
-      <motion.div 
-        className="min-h-screen flex flex-col items-center justify-center p-4"
-        animate={{ y: isExpanded ? '-100vh' : 0 }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-      >
-        {showConfetti && <ReactConfetti />}
-        <nav className="absolute top-0 left-0 right-0 p-4">
+      {showConfetti && <ReactConfetti />}
+      <div className="fixed top-0 left-0 right-0 z-10 bg-slate-900 p-4">
+        <nav className="mb-4">
           <ul className="flex space-x-4">
             <li><Link to="/" className="hover:text-gray-300">Home</Link></li>
             <li><Link to="/about" className="hover:text-gray-300">About</Link></li>
@@ -111,7 +107,7 @@ const MainPage = () => {
           <h1 className="text-4xl font-bold mb-2">Writer Analysis Tool</h1>
           <p>Get insights into your writing style</p>
         </div>
-        <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
+        <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto mb-4">
           <div className="flex items-center border-b border-white py-2">
             <input
               className="appearance-none bg-transparent border-none w-full text-white mr-3 py-1 px-2 leading-tight focus:outline-none"
@@ -129,7 +125,13 @@ const MainPage = () => {
             </button>
           </div>
         </form>
-        
+      </div>
+
+      <motion.div 
+        className="min-h-screen pt-64 flex flex-col items-center justify-start p-4"
+        animate={{ y: isExpanded ? '-100vh' : 0 }}
+        transition={{ duration: 1.5, ease: "easeInOut" }}
+      >
         {isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -151,7 +153,7 @@ const MainPage = () => {
         className="min-h-screen flex flex-col items-center justify-start p-4 bg-slate-900 border-t-4 border-gray-300"
         initial={{ y: '100vh' }}
         animate={{ y: isExpanded ? 0 : '100vh' }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
+        transition={{ duration: 1.5, ease: "easeInOut" }}
       >
         <AnimatePresence>
           {analysisResult && (
