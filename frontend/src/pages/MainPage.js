@@ -39,11 +39,14 @@ const MainPage = () => {
     try {
       const result = await analyzeUrl(url);
       console.log('Initial API response:', result);
+      if (!result.task_id) {
+        throw new Error('No task ID received from the server');
+      }
       setTotalEssays(result.total_essays || 10);
       await pollForResults(result.task_id);
     } catch (err) {
       console.error('Error during analysis:', err);
-      setError('An error occurred while analyzing the URL. Please try again.');
+      setError(`An error occurred while analyzing the URL: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -73,14 +76,20 @@ const MainPage = () => {
         } else if (result.status === 'error') {
           throw new Error(result.message || 'An error occurred during analysis.');
         } else if (result.status === 'processing') {
-          updateProgress(result.essays_analyzed || 0, totalEssays);
+          if (typeof result.essays_analyzed !== 'number') {
+            console.warn('Invalid essays_analyzed value:', result.essays_analyzed);
+          } else {
+            updateProgress(result.essays_analyzed, totalEssays);
+          }
+        } else {
+          console.warn('Unknown status received:', result.status);
         }
         
         attempts++;
         await new Promise(resolve => setTimeout(resolve, pollInterval));
       } catch (err) {
         console.error('Error in pollForResults:', err);
-        setError(err.message);
+        setError(`Error checking analysis status: ${err.message}`);
         return;
       }
     }
