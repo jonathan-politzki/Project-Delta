@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
@@ -20,7 +20,8 @@ const MainPage = () => {
   const [error, setError] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [isSlideDown, setIsSlideDown] = useState(false);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
+  const resultsRef = useRef(null);
 
   useEffect(() => {
     if (showConfetti) {
@@ -35,7 +36,7 @@ const MainPage = () => {
     setError(null);
     setAnalysisResult(null);
     setProgress(0);
-    setIsSlideDown(false);
+    setIsAnalysisComplete(false);
 
     try {
       const result = await analyzeUrl(url);
@@ -66,7 +67,10 @@ const MainPage = () => {
           setAnalysisResult(result.result);
           setProgress(100);
           setShowConfetti(true);
-          setTimeout(() => setIsSlideDown(true), 1000); // Delay slide down to allow confetti to be visible
+          setTimeout(() => {
+            setIsAnalysisComplete(true);
+            resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 1000); // Delay scrolling to allow confetti to be visible
           return;
         } else if (result.status === 'error') {
           throw new Error(result.message || 'An error occurred during analysis.');
@@ -94,85 +98,85 @@ const MainPage = () => {
   }, []);
 
   return (
-    <div className="h-[200vh] bg-slate-900 text-white overflow-hidden">
+    <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
       {showConfetti && <ReactConfetti />}
-      <motion.div 
-        className="fixed inset-0 flex flex-col"
-        animate={{ y: isSlideDown ? '-50%' : '0%' }}
-        transition={{ duration: 2.5, ease: "easeInOut" }}
-      >
-        <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <nav className="absolute top-0 left-0 right-0 p-4">
-            <ul className="flex space-x-4">
-              <li><Link to="/" className="hover:text-gray-300">Home</Link></li>
-              <li><Link to="/about" className="hover:text-gray-300">About</Link></li>
-            </ul>
-          </nav>
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2">Writer Analysis Tool</h1>
-            <p>Get insights into your writing style</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <nav className="absolute top-0 left-0 right-0 p-4">
+          <ul className="flex space-x-4">
+            <li><Link to="/" className="hover:text-gray-300">Home</Link></li>
+            <li><Link to="/about" className="hover:text-gray-300">About</Link></li>
+          </ul>
+        </nav>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">Writer Analysis Tool</h1>
+          <p>Get insights into your writing style</p>
+        </div>
+        <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
+          <div className="flex items-center border-b border-white py-2">
+            <input
+              className="appearance-none bg-transparent border-none w-full text-white mr-3 py-1 px-2 leading-tight focus:outline-none"
+              type="text"
+              placeholder="Enter your Substack or Medium URL"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+            <button
+              className="flex-shrink-0 bg-white hover:bg-gray-200 text-slate-900 font-bold py-2 px-4 rounded"
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Analyzing...' : 'Analyze'}
+            </button>
           </div>
-          <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
-            <div className="flex items-center border-b border-white py-2">
-              <input
-                className="appearance-none bg-transparent border-none w-full text-white mr-3 py-1 px-2 leading-tight focus:outline-none"
-                type="text"
-                placeholder="Enter your Substack or Medium URL"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
-              <button
-                className="flex-shrink-0 bg-white hover:bg-gray-200 text-slate-900 font-bold py-2 px-4 rounded"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Analyzing...' : 'Analyze'}
-              </button>
-            </div>
-          </form>
-          
-          {isLoading && (
+        </form>
+        
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="w-full max-w-md text-center"
+          >
+            <LoadingBar progress={progress} />
+            <p className="text-gray-300 mt-2">
+              Analysis in progress: {progress}% complete
+            </p>
+            <p className="text-gray-300 mt-2">
+              This may take a few minutes...
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      <motion.div
+        ref={resultsRef}
+        className="min-h-screen flex flex-col items-center justify-start p-4 bg-slate-900 border-t-4 border-gray-300"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isAnalysisComplete ? 1 : 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <AnimatePresence>
+          {analysisResult && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="w-full max-w-md text-center"
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
-              <LoadingBar progress={progress} />
-              <p className="text-gray-300 mt-2">
-                Analysis in progress: {progress}% complete
-              </p>
-              <p className="text-gray-300 mt-2">
-                This may take a few minutes...
-              </p>
+              <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
+              <p><strong>Insights:</strong> {analysisResult.insights}</p>
+              <p><strong>Writing Style:</strong> {analysisResult.writing_style}</p>
+              <p><strong>Key Themes:</strong> {analysisResult.key_themes.join(', ')}</p>
+              <p><strong>Readability Score:</strong> {analysisResult.readability_score.toFixed(2)}</p>
+              <p><strong>Sentiment:</strong> {analysisResult.sentiment}</p>
+              <p><strong>Post Count:</strong> {analysisResult.post_count}</p>
             </motion.div>
           )}
-        </div>
+        </AnimatePresence>
 
-        <div className="flex-1 flex flex-col items-center justify-start p-4 bg-slate-900 border-t-4 border-gray-300">
-          <AnimatePresence>
-            {analysisResult && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
-              >
-                <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-                <p><strong>Insights:</strong> {analysisResult.insights}</p>
-                <p><strong>Writing Style:</strong> {analysisResult.writing_style}</p>
-                <p><strong>Key Themes:</strong> {analysisResult.key_themes.join(', ')}</p>
-                <p><strong>Readability Score:</strong> {analysisResult.readability_score.toFixed(2)}</p>
-                <p><strong>Sentiment:</strong> {analysisResult.sentiment}</p>
-                <p><strong>Post Count:</strong> {analysisResult.post_count}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {error && (
-            <p className="text-red-500 mt-4">{error}</p>
-          )}
-        </div>
+        {error && (
+          <p className="text-red-500 mt-4">{error}</p>
+        )}
       </motion.div>
     </div>
   );
