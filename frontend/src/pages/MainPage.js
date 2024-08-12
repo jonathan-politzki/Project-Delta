@@ -23,6 +23,26 @@ const MainPage = () => {
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const resultsRef = useRef(null);
 
+  const scrollToResults = (duration = 3500) => {
+    setIsAnalysisComplete(true);
+    const start = window.pageYOffset;
+    const end = resultsRef.current?.offsetTop ?? 0;
+    const startTime = performance.now();
+
+    const animateScroll = (currentTime) => {
+      const elapsedTime = currentTime - startTime;
+      const progress = Math.min(elapsedTime / duration, 1);
+      const easeProgress = 0.5 - Math.cos(progress * Math.PI) / 2; // Easing function for smooth animation
+      window.scrollTo(0, start + (end - start) * easeProgress);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll);
+      }
+    };
+
+    requestAnimationFrame(animateScroll);
+  };
+
   useEffect(() => {
     if (showConfetti) {
       const timer = setTimeout(() => setShowConfetti(false), 5000);
@@ -68,8 +88,7 @@ const MainPage = () => {
           setProgress(100);
           setShowConfetti(true);
           setTimeout(() => {
-            setIsAnalysisComplete(true);
-            resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            scrollToResults(3500); // Scroll duration set to 3.5 seconds
           }, 1000); // Delay scrolling to allow confetti to be visible
           return;
         } else if (result.status === 'error') {
