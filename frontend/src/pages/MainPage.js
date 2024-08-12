@@ -1,5 +1,3 @@
-// frontend/src/pages/MainPage.js
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +20,7 @@ const MainPage = () => {
   const [error, setError] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [totalEssays, setTotalEssays] = useState(10); // Default to 10 essays
+  const [totalEssays, setTotalEssays] = useState(10);
 
   useEffect(() => {
     if (showConfetti) {
@@ -40,6 +38,7 @@ const MainPage = () => {
 
     try {
       const result = await analyzeUrl(url);
+      console.log('Initial API response:', result);
       setTotalEssays(result.total_essays || 10);
       await pollForResults(result.task_id);
     } catch (err) {
@@ -56,14 +55,15 @@ const MainPage = () => {
     let attempts = 0;
 
     const updateProgress = (current, total) => {
-      // Logarithmic progress function
-      const progress = (Math.log(current + 1) / Math.log(total + 1)) * 100;
-      setProgress(Math.min(progress, 99)); // Cap at 99% until complete
+      const newProgress = Math.min(Math.round((current / total) * 100), 99);
+      console.log(`Updating progress: ${current}/${total} = ${newProgress}%`);
+      setProgress(newProgress);
     };
 
     while (attempts < maxAttempts) {
       try {
         const result = await getAnalysisStatus(taskId);
+        console.log('Status update:', result);
         
         if (result.status === 'completed') {
           setAnalysisResult(result.result);
@@ -79,6 +79,7 @@ const MainPage = () => {
         attempts++;
         await new Promise(resolve => setTimeout(resolve, pollInterval));
       } catch (err) {
+        console.error('Error in pollForResults:', err);
         setError(err.message);
         return;
       }
@@ -126,7 +127,12 @@ const MainPage = () => {
           className="w-full max-w-md text-center"
         >
           <LoadingBar progress={progress} />
-          <p className="text-gray-300 mt-2">Analysis in progress. This may take a few minutes...</p>
+          <p className="text-gray-300 mt-2">
+            Analysis in progress: {progress}% complete
+          </p>
+          <p className="text-gray-300 mt-2">
+            This may take a few minutes...
+          </p>
         </motion.div>
       )}
 
