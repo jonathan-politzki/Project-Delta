@@ -93,7 +93,7 @@ project-delta/
 - Backend: FastAPI, Python
 - Frontend: React, Tailwind CSS
 - Natural Language Processing: NLTK, OpenAI GPT
-- Deployment: Vercel (frontend), Heroku (backend)
+- Deployment: Vercel (frontend), Heroku (backend), Docker
 
 ## Contributing
 
