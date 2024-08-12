@@ -42,19 +42,6 @@ services:
     depends_on:
       - "etcd"
       - "minio"
-    backend:
-      build: .
-      ports:
-        - "${PORT}:${PORT}"
-      environment:
-        - PORT=${PORT}
-        - MILVUS_HOST=standalone
-        - MILVUS_PORT=19530
-      depends_on:
-        - standalone
-      volumes:
-        - ./backend:/app/backend
-
 
 networks:
   default:

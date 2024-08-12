@@ -17,4 +17,4 @@ RUN python -m nltk.downloader -d /usr/local/share/nltk_data $(cat nltk.txt)
 WORKDIR /app/backend
 
 # Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+CMD uvicorn main:app --host 0.0.0.0 --port $PORT
