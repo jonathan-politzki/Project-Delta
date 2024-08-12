@@ -21,7 +21,7 @@ analysis_results = {}
 @router.post("/", response_model=dict)
 async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTasks):
     task_id = str(uuid.uuid4())
-    analysis_results[task_id] = {"status": "processing"}  # Initialize the task
+    analysis_results[task_id] = {"status": "processing", "progress": 0, "total_essays": 0}  # Initialize the task
     
     try:
         # Validate and normalize the URL
@@ -42,24 +42,31 @@ async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTask
 async def analyze_url_background(url: str, task_id: str):
     try:
         logger.info(f"Starting background analysis for task {task_id}, URL: {url}")
-        analysis_results[task_id] = {"status": "processing"}
         scraped_data = await scrape_url(url)
         df = scraper_output_to_df(scraped_data)
         
-        logger.info(f"Scraped {len(df)} posts")
+        total_posts = len(df)
+        analysis_results[task_id]["total_essays"] = total_posts
+        logger.info(f"Scraped {total_posts} posts")
         
         if df.empty:
             raise ValueError(f"No posts were scraped from the URL: {url}. Please check if the URL is correct and accessible.")
 
         # Process each article/post
         results = []
-        for _, row in df.iterrows():
+        for index, row in df.iterrows():
             try:
                 processed_text = process_text(row['content'])
                 insights = await generate_insights(processed_text)
                 embedding = await generate_embedding(processed_text)
                 analysis = await generate_analysis(processed_text, embedding)
                 results.append(analysis)
+                
+                # Update progress
+                progress = int((index + 1) / total_posts * 100)
+                analysis_results[task_id]["progress"] = progress
+                analysis_results[task_id]["essays_analyzed"] = index + 1
+                logger.info(f"Task {task_id}: Processed {index + 1}/{total_posts} posts")
             except Exception as e:
                 logger.error(f"Error processing post: {str(e)}")
                 # Continue with the next post instead of breaking the loop
@@ -78,26 +85,19 @@ async def analyze_url_background(url: str, task_id: str):
         }
         
         logger.info(f"Analysis completed for task {task_id}")
-        analysis_results[task_id] = {"status": "completed", "result": combined_analysis}
+        analysis_results[task_id] = {"status": "completed", "result": combined_analysis, "progress": 100}
     except Exception as e:
         logger.error(f"Error in analyze_url_background for task {task_id}: {str(e)}")
         analysis_results[task_id] = {"status": "error", "message": str(e)}
 
     logger.info(f"Final status for task {task_id}: {analysis_results[task_id]['status']}")
 
-@router.post("/", response_model=dict)
-async def analyze_url(request: AnalysisRequest, background_tasks: BackgroundTasks):
-    task_id = str(uuid.uuid4())
-    analysis_results[task_id] = {"status": "processing"}  # Initialize the task
-    background_tasks.add_task(analyze_url_background, request.url, task_id)
-    return {"task_id": task_id, "status": "processing"}
-
 @router.get("/status/{task_id}")
 async def get_analysis_status(task_id: str):
     logger.info(f"Checking status for task: {task_id}")
-    logger.info(f"Current analysis_results: {analysis_results}")
     if task_id not in analysis_results:
         logger.warning(f"Task not found: {task_id}")
-        return {"status": "not_found"}  # Return a status instead of raising an exception
-    logger.info(f"Returning status for task {task_id}: {analysis_results[task_id]}")
-    return analysis_results[task_id]
+        return {"status": "not_found"}
+    status = analysis_results[task_id]
+    logger.info(f"Returning status for task {task_id}: {status}")
+    return status
