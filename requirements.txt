@@ -48,7 +48,6 @@ packaging==24.1
 pandas==2.2.2
 pluggy==1.5.0
 protobuf==5.27.3
-pydantic==2.3.0
 pydantic_core==2.20.1
 pymilvus==2.4.4
 pyphen==0.16.0
