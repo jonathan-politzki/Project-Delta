@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const LoadingBar = ({ progress }) => (
   <div className="w-full bg-gray-700 rounded-full h-2.5 mb-4">
@@ -87,26 +86,9 @@ const MainPage = () => {
         return;
       }
     }
+
     setError('Analysis timed out. Please try again later.');
   }, []);
-
-  const renderAnalysisResult = () => (
-    <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-4xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
-    >
-      <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-      <p><strong>Insights:</strong> {analysisResult.insights}</p>
-      <p><strong>Writing Style:</strong> {analysisResult.writing_style}</p>
-      <p><strong>Key Themes:</strong> {analysisResult.key_themes.join(', ')}</p>
-      <p><strong>Readability Score:</strong> {analysisResult.readability_score.toFixed(2)}</p>
-      <p><strong>Sentiment:</strong> {analysisResult.sentiment}</p>
-      <p><strong>Post Count:</strong> {analysisResult.post_count}</p>
-    </motion.div>
-  );
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
@@ -157,13 +139,27 @@ const MainPage = () => {
       )}
 
       <AnimatePresence>
-        {analysisResult && renderAnalysisResult()}
+        {analysisResult && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-4xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
+          >
+            <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
+            <p><strong>Insights:</strong> {analysisResult.insights}</p>
+            <p><strong>Writing Style:</strong> {analysisResult.writing_style}</p>
+            <p><strong>Key Themes:</strong> {analysisResult.key_themes.join(', ')}</p>
+            <p><strong>Readability Score:</strong> {analysisResult.readability_score.toFixed(2)}</p>
+            <p><strong>Sentiment:</strong> {analysisResult.sentiment}</p>
+            <p><strong>Post Count:</strong> {analysisResult.post_count}</p>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {error && (
-        <Alert variant="destructive" className="mt-4">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <p className="text-red-500 mt-4">{error}</p>
       )}
     </div>
   );
