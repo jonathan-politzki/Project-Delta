@@ -1,8 +1,9 @@
 // frontend/src/pages/MainPage.js
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactConfetti from 'react-confetti';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
 
 const MainPage = () => {
@@ -10,6 +11,14 @@ const MainPage = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (showConfetti) {
+      const timer = setTimeout(() => setShowConfetti(false), 5000); // Stop confetti after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [showConfetti]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -39,6 +48,7 @@ const MainPage = () => {
         
         if (result.status === 'completed') {
           setAnalysisResult(result.result);
+          setShowConfetti(true); // Trigger confetti
           return;
         } else if (result.status === 'error') {
           throw new Error(result.message || 'An error occurred during analysis.');
@@ -57,6 +67,7 @@ const MainPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
+      {showConfetti && <ReactConfetti />}
       <nav className="absolute top-0 left-0 right-0 p-4">
         <ul className="flex space-x-4">
           <li><Link to="/" className="hover:text-gray-300">Home</Link></li>
@@ -92,7 +103,7 @@ const MainPage = () => {
           animate={{ opacity: 1 }}
           className="mt-4 text-center"
         >
-          <p className="text-yellow-300">Analysis in progress. This may take a few minutes...</p>
+          <p className="text-gray-300">Analysis in progress. This may take a few minutes...</p>
         </motion.div>
       )}
 
