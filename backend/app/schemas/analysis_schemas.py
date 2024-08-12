@@ -13,3 +13,20 @@ class AnalysisResponse(BaseModel):
     sentiment: str
     post_count: int
 
+### backend/app/schemas/analysis_schemas.py
+
+# this was an uncommitted change forgot about
+
+#from pydantic import BaseModel
+#
+#class AnalysisRequest(BaseModel):
+#    url: str
+#
+#class AnalysisResponse(BaseModel):
+#    insights: str
+#    writing_style: str
+#    key_themes: list
+#    readability_score: float
+#    sentiment: str
+#    post_count: int
+
