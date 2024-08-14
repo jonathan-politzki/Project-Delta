@@ -205,15 +205,26 @@ async def scrape_substack(url: str) -> Dict[str, List[Dict[str, str]]]:
 async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
     parsed_url = urlparse(url)
     
+    # Handle Medium URLs
     if 'medium.com' in parsed_url.netloc:
-        # Handle Medium URLs
-        path_parts = parsed_url.path.strip('/').split('/')
-        username = path_parts[0] if path_parts else ''
-        if username.startswith('@'):
-            username = username[1:]
-        return await scrape_medium(f"https://medium.com/@{username}")
+        if parsed_url.netloc == 'medium.com':
+            # URL is already in the correct format
+            path_parts = parsed_url.path.strip('/').split('/')
+            username = path_parts[0] if path_parts else ''
+        else:
+            # URL is in the format username.medium.com
+            username = parsed_url.netloc.split('.')[0]
+        
+        # Remove '@' if it's present
+        username = username.lstrip('@')
+        
+        # Construct the standardized Medium URL
+        standardized_url = f"https://medium.com/@{username}"
+        logger.info(f"Transformed Medium URL: {standardized_url}")
+        return await scrape_medium(standardized_url)
+    
+    # Handle Substack URLs (existing code)
     elif 'substack.com' in parsed_url.netloc or parsed_url.netloc.endswith('.com'):
-        # Handle Substack URLs
         if parsed_url.path.startswith('/@'):
             username = parsed_url.path.split('@')[1].split('/')[0]
         elif 'substack.com' in parsed_url.netloc:
@@ -227,7 +238,6 @@ async def scrape_url(url: str) -> Dict[str, List[Dict[str, str]]]:
         return await scrape_substack(substack_url)
     else:
         raise ValueError(f"Unsupported URL: {url}")
-
 
 
 def save_to_csv(data: Dict[str, List[Dict[str, str]]], filename: str):
