@@ -30,7 +30,7 @@ const AboutPage = () => {
           <h2 className="text-2xl font-semibold mb-4">Project Delta</h2>
           <p className="mb-4">
             Learn more about the inspiration behind this tool in the 
-            <a href="https://jonathanpolitzki.substack.com/p/project-delta" 
+            <a href="https://jonathanpolitzki.substack.com/p/delta" 
                className="text-blue-400 hover:text-blue-300 ml-1" 
                target="_blank" 
                rel="noopener noreferrer">
