@@ -50,8 +50,8 @@ const AboutPage = () => {
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4">About This Project</h2>
           <p>
-            We believe that writing is an intimate projection of an author's mind and that everyone has a unique "fingerprint". The Writer Analysis Tool is designed to provide insights into writing styles and an authors personality using advanced language processing techniques. 
-            Our goal is to help writers understand their unique voice and compare it with others in the literary world. We also believe this technique can be used to understand how you are uniquely differentiated in the sea of other writers.
+            We believe that writing is an intimate projection of an author's mind and that everyone has a unique "fingerprint". The Writer Analysis Tool is designed to provide insights into an author's personality using modern advances in artificial intelligence. 
+            This free tool intakes your writing and extracts the concepts, interests, emotion, sentiment, beliefs, values, and experiences of the author. You may find the computer knows some parts of you better than you know yourself.
           </p>
         </section>
         
