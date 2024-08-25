@@ -59,16 +59,13 @@ const MainPage = () => {
     const maxAttempts = 60;
   
     const poll = async (attempts) => {
-      if (result.status === 'completed') {
-        setAnalysisState(prev => ({
-          ...prev,
-          result: result.result,
+      if (attempts >= maxAttempts) {
+        setAnalysisState(prev => ({ 
+          ...prev, 
+          error: 'Analysis timed out. Please try again later.', 
           isLoading: false,
-          progress: 100,
           isComplete: true
         }));
-        setShowConfetti(true);
-        setTimeout(() => scrollToResults(3500), 1000);
         return;
       }
   
@@ -118,100 +115,69 @@ const MainPage = () => {
     };
   
     poll(0);
-  }, [scrollToResults, setAnalysisState, setShowConfetti]);
+  }, [scrollToResults]);
 
-const handleSubmit = useCallback(async (e) => {
-  e.preventDefault();
-  setAnalysisState({
-    result: null,
-    isLoading: true,
-    error: null,
-    progress: 0,
-    isComplete: false,
-  });
-
-  try {
-    const result = await analyzeUrl(url);
-    console.log('Initial API response:', JSON.stringify(result, null, 2));
-    if (!result.task_id) {
-      throw new Error('No task ID received from the server');
-    }
-    await pollForResults(result.task_id);
-  } catch (err) {
-    console.error('Error during analysis:', err);
-    setAnalysisState(prev => ({ 
-      ...prev, 
-      error: `An error occurred while analyzing the URL: ${err.message}`, 
-      isLoading: false 
-    }));
-  }
-}, [url, pollForResults]);
-
-const renderAnalysisResult = useCallback(() => {
-  const { result } = analysisState;
-  if (!result || !result.insights) {
-    return <p>No analysis results available.</p>;
-  }
-
-  const { insights } = result;
-
-  // Function to clean up the text
-  const cleanText = (text) => {
-    return text
-      .replace(/\*\*/g, '')
-      .replace(/###/g, '')
-      .replace(/\n+/g, '\n')
-      .trim();
-  };
-
-  // Extract concepts and analyze them
-  const analyzeConcepts = (text) => {
-    const conceptsSection = text.split('Key Themes:')[1];
-    if (!conceptsSection) return [];
-
-    const concepts = conceptsSection
-      .split('\n')
-      .filter(line => line.trim().startsWith('1.') || line.trim().startsWith('2.') || line.trim().startsWith('3.') || line.trim().startsWith('4.') || line.trim().startsWith('5.') || line.trim().startsWith('6.'))
-      .map(concept => {
-        const cleanConcept = cleanText(concept);
-        const [, conceptText] = cleanConcept.split('. ');
-        return conceptText;
-      });
-
-    return concepts.map(concept => {
-      const isCommon = Math.random() > 0.5; // Simulating comparison with common knowledge
-      return {
-        concept,
-        analysis: isCommon ? 
-          `This concept aligns with common beliefs in the field.` :
-          `This idea challenges conventional wisdom and offers a fresh perspective.`
-      };
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setAnalysisState({
+      result: null,
+      isLoading: true,
+      error: null,
+      progress: 0,
+      isComplete: false,
     });
-  };
 
-  const analyzedConcepts = analyzeConcepts(insights);
+    try {
+      const result = await analyzeUrl(url);
+      console.log('Initial API response:', JSON.stringify(result, null, 2));
+      if (!result.task_id) {
+        throw new Error('No task ID received from the server');
+      }
+      await pollForResults(result.task_id);
+    } catch (err) {
+      console.error('Error during analysis:', err);
+      setAnalysisState(prev => ({ 
+        ...prev, 
+        error: `An error occurred while analyzing the URL: ${err.message}`, 
+        isLoading: false,
+        isComplete: true
+      }));
+    }
+  }, [url, pollForResults]);
 
-  return (
-    <div className="space-y-6">
-      <section>
-        <h3 className="text-xl font-semibold text-blue-400">Key Concepts and Ideas</h3>
-        <ul className="list-disc pl-5 space-y-4">
-          {analyzedConcepts.map((item, index) => (
-            <li key={index} className="text-gray-300">
-              <p><strong>{item.concept}</strong></p>
-              <p>{item.analysis}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  );
-}, [analysisState]);
-
-// Add this useEffect hook to log state changes
-useEffect(() => {
-  console.log('Analysis state updated:', JSON.stringify(analysisState, null, 2));
-}, [analysisState]);
+  const renderAnalysisResult = useCallback(() => {
+    const { result } = analysisState;
+    if (!result || !result.combined_analysis) {
+      return <p>No analysis results available.</p>;
+    }
+  
+    const { combined_analysis } = result;
+  
+    return (
+      <div className="space-y-6">
+        <section>
+          <h3 className="text-xl font-semibold text-blue-400">Key Concepts and Ideas</h3>
+          <ul className="list-disc pl-5 space-y-4">
+            {combined_analysis.combined_concepts.map((concept, index) => (
+              <li key={index} className="text-gray-300">
+                <p><strong>{concept}</strong></p>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section>
+          <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
+          <p className="text-gray-300">{combined_analysis.conclusion}</p>
+        </section>
+        <section>
+          <h3 className="text-xl font-semibold text-green-400">Additional Information</h3>
+          <p className="text-gray-300">Average Readability Score: {combined_analysis.avg_readability_score.toFixed(2)}</p>
+          <p className="text-gray-300">Overall Sentiment: {combined_analysis.overall_sentiment}</p>
+          <p className="text-gray-300">Essays Analyzed: {combined_analysis.essays_analyzed}</p>
+        </section>
+      </div>
+    );
+  }, [analysisState]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
