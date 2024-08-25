@@ -98,69 +98,99 @@ const MainPage = () => {
     poll(0);
   }, [scrollToResults]);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setAnalysisState({
-      result: null,
-      isLoading: true,
-      error: null,
-      progress: 0,
-      isComplete: false,
-    });
+const handleSubmit = useCallback(async (e) => {
+  e.preventDefault();
+  setAnalysisState({
+    result: null,
+    isLoading: true,
+    error: null,
+    progress: 0,
+    isComplete: false,
+  });
 
-    try {
-      const result = await analyzeUrl(url);
-      console.log('Initial API response:', JSON.stringify(result, null, 2));
-      if (!result.task_id) {
-        throw new Error('No task ID received from the server');
-      }
-      await pollForResults(result.task_id);
-    } catch (err) {
-      console.error('Error during analysis:', err);
-      setAnalysisState(prev => ({ ...prev, error: `An error occurred while analyzing the URL: ${err.message}`, isLoading: false }));
+  try {
+    const result = await analyzeUrl(url);
+    console.log('Initial API response:', JSON.stringify(result, null, 2));
+    if (!result.task_id) {
+      throw new Error('No task ID received from the server');
     }
-  }, [url, pollForResults]);
+    await pollForResults(result.task_id);
+  } catch (err) {
+    console.error('Error during analysis:', err);
+    setAnalysisState(prev => ({ 
+      ...prev, 
+      error: `An error occurred while analyzing the URL: ${err.message}`, 
+      isLoading: false 
+    }));
+  }
+}, [url, pollForResults]);
 
-  const renderAnalysisResult = useCallback(() => {
-    const { result } = analysisState;
-    if (!result || !result.insights) {
-      return <p>No analysis results available.</p>;
-    }
+const renderAnalysisResult = useCallback(() => {
+  console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
+  const { result } = analysisState;
+  if (!result) {
+    console.log('No result available');
+    return <p>No analysis results available.</p>;
+  }
 
-    const { insights } = result;
-    return (
-      <div className="space-y-6">
-        {insights.writing_style && (
-          <section>
-            <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
+  if (!result.insights) {
+    console.log('No insights available in result');
+    return <p>Analysis completed, but no insights were generated.</p>;
+  }
+
+  const { insights } = result;
+  console.log('Rendering insights:', JSON.stringify(insights, null, 2));
+
+  return (
+    <div className="space-y-6">
+      {insights.writing_style && (
+        <section>
+          <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
+          {Array.isArray(insights.writing_style) ? (
             <ul className="list-disc pl-5 space-y-2">
               {insights.writing_style.map((style, index) => (
                 <li key={index} className="text-gray-300">{style}</li>
               ))}
             </ul>
-          </section>
-        )}
-        
-        {insights.key_themes && insights.key_themes.length > 0 && (
-          <section>
-            <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
-            <ul className="list-disc pl-5 space-y-2">
-              {insights.key_themes.map((theme, index) => (
-                <li key={index} className="text-gray-300">{theme}</li>
-              ))}
-            </ul>
-          </section>
-        )}
-        
-        {insights.conclusion && (
-          <section>
-            <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
-            <p className="text-gray-300 whitespace-pre-wrap">{insights.conclusion}</p>
-          </section>
-        )}
-      </div>
-    );
-  }, [analysisState]);
+          ) : (
+            <p className="text-gray-300">{insights.writing_style}</p>
+          )}
+        </section>
+      )}
+      
+      {insights.key_themes && insights.key_themes.length > 0 && (
+        <section>
+          <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            {insights.key_themes.map((theme, index) => (
+              <li key={index} className="text-gray-300">{theme}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      
+      {insights.conclusion && (
+        <section>
+          <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
+          <p className="text-gray-300 whitespace-pre-wrap">{insights.conclusion}</p>
+        </section>
+      )}
+
+      {/* Debug information */}
+      <section className="mt-8 p-4 bg-gray-700 rounded">
+        <h3 className="text-xl font-semibold text-red-400">Debug Information</h3>
+        <pre className="text-xs text-gray-300 whitespace-pre-wrap overflow-x-auto">
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      </section>
+    </div>
+  );
+}, [analysisState]);
+
+// Add this useEffect hook to log state changes
+useEffect(() => {
+  console.log('Analysis state updated:', JSON.stringify(analysisState, null, 2));
+}, [analysisState]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
