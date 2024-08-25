@@ -18,9 +18,9 @@ async def extract_concepts(text: str) -> dict:
         logger.info(f"Extracting concepts for text: {text[:100]}...")  # Log first 100 chars
 
         response = await client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given text and extract the 3 main concepts that make up the author's personality fingerprint, describe the writing style, and provide an overall conclusion. Do not focus on writing style, grammer, or readability at all. Focus solely on the ideas in the text from an unbiased perspective to extract them in isolation."},
+                {"role": "system", "content": "You are a highly intelligent scholar tasked with extracting the main ideas from a text. Take this text and extract the main 3 big concepts in a standalone way, describing only the semantic meaning and not syntax or style."},
                 {"role": "user", "content": text}
             ],
             temperature=0.1
@@ -83,9 +83,9 @@ async def combine_concepts(all_concepts: list) -> dict:
     
     try:
         response = await client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given concepts from multiple essays and synthesize them into 3 overarching concepts that represent the author's personality fingerprint. Also provide an overall conclusion and describe the general writing style."},
+                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given concepts from multiple essays and synthesize them into 3 overarching trends in the type of ideas discussed. Make sure to do this relative to the standard text or opinion to reflect how this text is differentiated vs common ideas or knowledge."},
                 {"role": "user", "content": combined_text}
             ],
             temperature=0.1
