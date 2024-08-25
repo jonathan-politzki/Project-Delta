@@ -64,6 +64,8 @@ async def analyze_url_background(url: str, task_id: str):
     except Exception as e:
         logger.error(f"Error in analyze_url_background for task {task_id}: {str(e)}")
         analysis_results[task_id] = {"status": "error", "message": str(e)}
+        logger.info(f"Final analysis result for task {task_id}: {json.dumps(analysis_results[task_id])}")
+
 
 
 @router.get("/status/{task_id}")

@@ -84,6 +84,7 @@ const MainPage = () => {
         console.log('Status update:', result);
         
         if (result.status === 'completed') {
+          console.log('Analysis completed. Result:', result.result);
           setAnalysisResult(result.result);
           setProgress(100);
           setShowConfetti(true);
@@ -115,6 +116,52 @@ const MainPage = () => {
 
     setError('Analysis timed out. Please try again later.');
   }, []);
+
+  const renderAnalysisResult = () => {
+    if (!analysisResult) return null;
+
+    console.log('Rendering analysis result:', analysisResult);
+
+    if (analysisResult.individual_concepts && analysisResult.individual_concepts.length > 0) {
+      return (
+        <>
+          {analysisResult.individual_concepts.map((essay, index) => (
+            <div key={index} className="mb-8 border-b border-gray-700 pb-4">
+              <h3 className="text-xl font-semibold mt-4 mb-2">Essay {index + 1} Concepts</h3>
+              {essay.core_concepts && essay.core_concepts.map((concept, cIndex) => (
+                <div key={cIndex} className="mb-4">
+                  <h4 className="text-lg font-medium text-blue-400">{concept.title}</h4>
+                  <p className="text-gray-300">{concept.description}</p>
+                </div>
+              ))}
+              <h4 className="text-lg font-medium mt-4 text-green-400">Overarching Concept</h4>
+              <p className="text-gray-300">{essay.overarching_concept}</p>
+            </div>
+          ))}
+
+          {analysisResult.aggregated_concepts && (
+            <>
+              <h3 className="text-xl font-semibold mt-6 mb-2">Top 5 Aggregated Concepts</h3>
+              <ul className="list-disc pl-5">
+                {analysisResult.aggregated_concepts.map((item, index) => (
+                  <li key={index} className="mb-2">
+                    <span className="font-medium text-yellow-400">{item.concept}</span> (Mentioned {item.count} times)
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </>
+      );
+    } else {
+      // Fallback to display raw JSON if structured display fails
+      return (
+        <pre className="text-white whitespace-pre-wrap">
+          {JSON.stringify(analysisResult, null, 2)}
+        </pre>
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
@@ -174,7 +221,7 @@ const MainPage = () => {
         transition={{ duration: 0.5 }}
       >
         <AnimatePresence>
-          {analysisResult && analysisResult.individual_concepts && (
+          {analysisResult && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -183,33 +230,7 @@ const MainPage = () => {
               className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-              
-              {analysisResult.individual_concepts.map((essay, index) => (
-                <div key={index} className="mb-8 border-b border-gray-700 pb-4">
-                  <h3 className="text-xl font-semibold mt-4 mb-2">Essay {index + 1} Concepts</h3>
-                  {essay.core_concepts && essay.core_concepts.map((concept, cIndex) => (
-                    <div key={cIndex} className="mb-4">
-                      <h4 className="text-lg font-medium text-blue-400">{concept.title}</h4>
-                      <p className="text-gray-300">{concept.description}</p>
-                    </div>
-                  ))}
-                  <h4 className="text-lg font-medium mt-4 text-green-400">Overarching Concept</h4>
-                  <p className="text-gray-300">{essay.overarching_concept}</p>
-                </div>
-              ))}
-
-              {analysisResult.aggregated_concepts && (
-                <>
-                  <h3 className="text-xl font-semibold mt-6 mb-2">Top 5 Aggregated Concepts</h3>
-                  <ul className="list-disc pl-5">
-                    {analysisResult.aggregated_concepts.map((item, index) => (
-                      <li key={index} className="mb-2">
-                        <span className="font-medium text-yellow-400">{item.concept}</span> (Mentioned {item.count} times)
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
+              {renderAnalysisResult()}
             </motion.div>
           )}
         </AnimatePresence>
