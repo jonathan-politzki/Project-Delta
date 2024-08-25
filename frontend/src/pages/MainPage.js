@@ -76,6 +76,7 @@ const MainPage = () => {
 
         switch (result.status) {
           case 'completed':
+            console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
               result: result,
@@ -91,6 +92,7 @@ const MainPage = () => {
             throw new Error(result.message || 'An error occurred during analysis.');
 
           case 'processing':
+            console.log('Processing update:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
               progress: typeof result.progress === 'number' 

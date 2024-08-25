@@ -75,6 +75,9 @@ def parse_insights(text: str) -> dict:
 async def combine_concepts(all_concepts: list) -> dict:
     combined_text = "\n".join([f"Essay {i+1}:\n" + "\n".join(essay["insights"]["key_themes"]) for i, essay in enumerate(all_concepts)])
     
+    logger.info(f"Combining concepts from {len(all_concepts)} essays")
+    logger.info(f"Combined text: {combined_text}")
+
     try:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
@@ -85,9 +88,14 @@ async def combine_concepts(all_concepts: list) -> dict:
             temperature=0.1
         )
 
+        logger.info(f"Raw OpenAI API response for combined concepts: {response}")
+
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
-            return parse_insights(result)
+            logger.info(f"Raw LLM result for combined concepts: {result}")
+            parsed_result = parse_insights(result)
+            logger.info(f"Parsed insights for combined concepts: {parsed_result}")
+            return parsed_result
         else:
             logger.error("No choices returned in response for combined concepts.")
             return {"insights": {"key_themes": []}}
