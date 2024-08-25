@@ -57,47 +57,66 @@ const MainPage = () => {
   const pollForResults = useCallback(async (taskId) => {
     const pollInterval = 5000;
     const maxAttempts = 60;
-
+  
     const poll = async (attempts) => {
       if (attempts >= maxAttempts) {
-        setAnalysisState(prev => ({ ...prev, error: 'Analysis timed out. Please try again later.', isLoading: false }));
+        setAnalysisState(prev => ({ 
+          ...prev, 
+          error: 'Analysis timed out. Please try again later.', 
+          isLoading: false,
+          isComplete: true
+        }));
         return;
       }
-
+  
       try {
         const result = await getAnalysisStatus(taskId);
         console.log('Status update:', JSON.stringify(result, null, 2));
-        
-        if (result.status === 'completed') {
-          setAnalysisState(prev => ({
-            ...prev,
-            result: result.result,
-            isLoading: false,
-            progress: 100,
-          }));
-          setShowConfetti(true);
-          setTimeout(() => scrollToResults(3500), 1000);
-        } else if (result.status === 'error') {
-          throw new Error(result.message || 'An error occurred during analysis.');
-        } else if (result.status === 'processing') {
-          setAnalysisState(prev => ({
-            ...prev,
-            progress: typeof result.progress === 'number' ? result.progress : Math.min(Math.round((attempts / maxAttempts) * 100), 99),
-          }));
-          setTimeout(() => poll(attempts + 1), pollInterval);
-        } else {
-          console.warn('Unknown status received:', result.status);
-          setTimeout(() => poll(attempts + 1), pollInterval);
+  
+        switch (result.status) {
+          case 'completed':
+            setAnalysisState(prev => ({
+              ...prev,
+              result: result.result,
+              isLoading: false,
+              progress: 100,
+              isComplete: true
+            }));
+            setShowConfetti(true);
+            setTimeout(() => scrollToResults(3500), 1000);
+            break;
+  
+          case 'error':
+            throw new Error(result.message || 'An error occurred during analysis.');
+  
+          case 'processing':
+            setAnalysisState(prev => ({
+              ...prev,
+              progress: typeof result.progress === 'number' 
+                ? result.progress 
+                : Math.min(Math.round((attempts / maxAttempts) * 100), 99),
+            }));
+            setTimeout(() => poll(attempts + 1), pollInterval);
+            break;
+  
+          default:
+            console.warn('Unknown status received:', result.status);
+            setTimeout(() => poll(attempts + 1), pollInterval);
         }
       } catch (err) {
         console.error('Error in pollForResults:', err);
-        setAnalysisState(prev => ({ ...prev, error: `Error checking analysis status: ${err.message}`, isLoading: false }));
+        setAnalysisState(prev => ({ 
+          ...prev, 
+          error: `Error checking analysis status: ${err.message}`, 
+          isLoading: false,
+          isComplete: true
+        }));
       }
     };
-
+  
     poll(0);
-  }, [scrollToResults]);
-
+  }, [scrollToResults, setAnalysisState, setShowConfetti]);
+  
 const handleSubmit = useCallback(async (e) => {
   e.preventDefault();
   setAnalysisState({
@@ -133,48 +152,41 @@ const renderAnalysisResult = useCallback(() => {
     return <p>No analysis results available.</p>;
   }
 
-  if (!result.insights) {
-    console.log('No insights available in result');
-    return <p>Analysis completed, but no insights were generated.</p>;
-  }
-
-  const { insights } = result;
-  console.log('Rendering insights:', JSON.stringify(insights, null, 2));
+  const { insights, writing_style, key_themes, readability_score, sentiment, post_count } = result;
 
   return (
     <div className="space-y-6">
-      {insights.writing_style && (
+      {insights && (
         <section>
-          <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
-          {Array.isArray(insights.writing_style) ? (
-            <ul className="list-disc pl-5 space-y-2">
-              {insights.writing_style.map((style, index) => (
-                <li key={index} className="text-gray-300">{style}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-300">{insights.writing_style}</p>
-          )}
+          <h3 className="text-xl font-semibold text-blue-400">Insights</h3>
+          <p className="text-gray-300 whitespace-pre-wrap">{insights}</p>
         </section>
       )}
       
-      {insights.key_themes && insights.key_themes.length > 0 && (
+      {writing_style && (
+        <section>
+          <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
+          <p className="text-gray-300">{writing_style}</p>
+        </section>
+      )}
+      
+      {key_themes && key_themes.length > 0 && (
         <section>
           <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
           <ul className="list-disc pl-5 space-y-2">
-            {insights.key_themes.map((theme, index) => (
+            {key_themes.map((theme, index) => (
               <li key={index} className="text-gray-300">{theme}</li>
             ))}
           </ul>
         </section>
       )}
       
-      {insights.conclusion && (
-        <section>
-          <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
-          <p className="text-gray-300 whitespace-pre-wrap">{insights.conclusion}</p>
-        </section>
-      )}
+      <section>
+        <h3 className="text-xl font-semibold text-yellow-400">Additional Information</h3>
+        <p className="text-gray-300">Readability Score: {readability_score.toFixed(2)}</p>
+        <p className="text-gray-300">Sentiment: {sentiment}</p>
+        <p className="text-gray-300">Posts Analyzed: {post_count}</p>
+      </section>
 
       {/* Debug information */}
       <section className="mt-8 p-4 bg-gray-700 rounded">
