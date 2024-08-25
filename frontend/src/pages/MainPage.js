@@ -78,7 +78,7 @@ const MainPage = () => {
             console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
-              result: result.result,
+              result: result,
               isLoading: false,
               progress: 100,
               isComplete: true
@@ -161,15 +161,19 @@ const MainPage = () => {
       <div className="space-y-6">
         <section>
           <h3 className="text-xl font-semibold text-blue-400">Key Concepts</h3>
-          <ul className="list-disc pl-5 space-y-2">
-            {insights.key_themes.map((theme, index) => (
-              <li key={index} className="text-gray-300">{theme}</li>
-            ))}
-          </ul>
+          {Array.isArray(insights.key_themes) && insights.key_themes.length > 0 ? (
+            <ul className="list-disc pl-5 space-y-2">
+              {insights.key_themes.map((theme, index) => (
+                <li key={index} className="text-gray-300">{theme}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-300">No key concepts available</p>
+          )}
         </section>
         <section>
           <h3 className="text-xl font-semibold text-yellow-400">Author's Personality Fingerprint</h3>
-          <p className="text-gray-300">{insights.conclusion}</p>
+          <p className="text-gray-300">{insights.conclusion || 'Not available'}</p>
         </section>
         <section>
           <h3 className="text-xl font-semibold text-green-400">Writing Style</h3>
