@@ -1,6 +1,6 @@
 // MainPage.js
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
@@ -153,7 +153,7 @@ const MainPage = () => {
     }
   }, [url, pollForResults]);
 
-  const renderAnalysisResult = useCallback(() => {
+  const renderAnalysisResult = useMemo(() => {
     console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
     const { result } = analysisState;
     if (!result) {
@@ -163,13 +163,7 @@ const MainPage = () => {
 
     console.log('Result:', JSON.stringify(result, null, 2));
 
-    const insights = result.insights || result;  // Try both structures
-
-    if (!insights || typeof insights !== 'object') {
-      console.log('No valid insights available in the result');
-      return <p>No analysis insights available.</p>;
-    }
-
+    const insights = result.insights || result;
     console.log('Insights:', JSON.stringify(insights, null, 2));
 
     return (
@@ -271,7 +265,7 @@ const MainPage = () => {
               className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-              {renderAnalysisResult()}
+              {renderAnalysisResult}
             </motion.div>
           )}
         </AnimatePresence>
