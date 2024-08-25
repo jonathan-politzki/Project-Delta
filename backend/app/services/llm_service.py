@@ -19,7 +19,7 @@ async def generate_insights(text: str) -> str:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a writing analyst. Provide insights on the writing style and key themes of the given text."},
+                {"role": "system", "content": "You are an experienced writing analyst. Break down the text into its three core concepts."},
                 {"role": "user", "content": text}
             ],
             temperature=0.1
