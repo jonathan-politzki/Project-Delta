@@ -26,8 +26,11 @@ async def extract_concepts(text: str) -> dict:
             temperature=0.1
         )
 
+        logger.info(f"Raw OpenAI API response: {response}")
+
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
+            logger.info(f"Raw LLM result: {result}")
             structured_insights = parse_insights(result)
             logger.info(f"Extracted insights: {structured_insights}")
             return structured_insights
@@ -59,4 +62,13 @@ def parse_insights(text: str) -> dict:
         elif "Conclusion:" in section:
             structured_insights["conclusion"] = section.replace("Conclusion:", "").strip()
 
+    # If any section is empty, add a default message
+    if not structured_insights["writing_style"]:
+        structured_insights["writing_style"] = ["No writing style analysis available."]
+    if not structured_insights["key_themes"]:
+        structured_insights["key_themes"] = ["No key themes identified."]
+    if not structured_insights["conclusion"]:
+        structured_insights["conclusion"] = "No conclusion available."
+
     return structured_insights
+

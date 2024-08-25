@@ -53,12 +53,14 @@ async def analyze_url_background(url: str, task_id: str):
         if df.empty:
             raise ValueError(f"No posts were scraped from the URL: {url}. Please check if the URL is correct and accessible.")
 
-        # Process each article/post
+        ## Process each article/post
         all_insights = []
         for index, row in df.iterrows():
             try:
                 processed_text = process_text(row['content'])
+                logger.info(f"Processed text for post {index + 1}: {processed_text[:100]}...")  # Log first 100 chars
                 insights = await extract_concepts(processed_text['processed_text'])
+                logger.info(f"Extracted insights for post {index + 1}: {insights}")
                 all_insights.append(insights)
                 
                 # Update progress
@@ -68,6 +70,7 @@ async def analyze_url_background(url: str, task_id: str):
                 logger.info(f"Task {task_id}: Processed {index + 1}/{total_posts} posts")
             except Exception as e:
                 logger.error(f"Error processing post: {str(e)}")
+                logger.error(f"Error processing post {index + 1}: {str(e)}")
                 # Continue with the next post instead of breaking the loop
 
         if not all_insights:
@@ -91,6 +94,7 @@ async def analyze_url_background(url: str, task_id: str):
         # Generate an overall conclusion
         combined_insights["conclusion"] = f"Analysis based on {len(all_insights)} essays. " + all_insights[-1]["conclusion"]
         
+        logger.info(f"Combined insights: {combined_insights}")
         logger.info(f"Analysis completed for task {task_id}")
         analysis_results[task_id] = {
             "status": "completed",

@@ -25,7 +25,7 @@ const MainPage = () => {
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const resultsRef = useRef(null);
 
-  const scrollToResults = (duration = 3500) => {
+  const scrollToResults = useCallback((duration = 3500) => {
     setIsAnalysisComplete(true);
     const start = window.pageYOffset;
     const end = resultsRef.current?.offsetTop ?? 0;
@@ -43,7 +43,7 @@ const MainPage = () => {
     };
 
     requestAnimationFrame(animateScroll);
-  };
+  }, []);
 
   useEffect(() => {
     if (showConfetti) {
@@ -51,29 +51,6 @@ const MainPage = () => {
       return () => clearTimeout(timer);
     }
   }, [showConfetti]);
-
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setAnalysisResult(null);
-    setProgress(0);
-    setIsAnalysisComplete(false);
-
-    try {
-      const result = await analyzeUrl(url);
-      console.log('Initial API response:', result);
-      if (!result.task_id) {
-        throw new Error('No task ID received from the server');
-      }
-      await pollForResults(result.task_id);
-    } catch (err) {
-      console.error('Error during analysis:', err);
-      setError(`An error occurred while analyzing the URL: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [url]);
 
   const pollForResults = useCallback(async (taskId) => {
     const pollInterval = 5000; // 5 seconds
@@ -83,10 +60,10 @@ const MainPage = () => {
     while (attempts < maxAttempts) {
       try {
         const result = await getAnalysisStatus(taskId);
-        console.log('Status update:', result);
+        console.log('Status update:', JSON.stringify(result, null, 2));
         
         if (result.status === 'completed') {
-          console.log('Analysis completed. Result:', result.result);
+          console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
           setAnalysisResult(result.result);
           setProgress(100);
           setShowConfetti(true);
@@ -117,18 +94,43 @@ const MainPage = () => {
     }
 
     setError('Analysis timed out. Please try again later.');
-  }, []);
+  }, [scrollToResults]);
 
-  const renderAnalysisResult = () => {
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setAnalysisResult(null);
+    setProgress(0);
+    setIsAnalysisComplete(false);
+
+    try {
+      const result = await analyzeUrl(url);
+      console.log('Initial API response:', JSON.stringify(result, null, 2));
+      if (!result.task_id) {
+        throw new Error('No task ID received from the server');
+      }
+      await pollForResults(result.task_id);
+    } catch (err) {
+      console.error('Error during analysis:', err);
+      setError(`An error occurred while analyzing the URL: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [url, pollForResults]);
+
+  const renderAnalysisResult = useCallback(() => {
+    console.log('Rendering analysis result. Full analysisResult:', JSON.stringify(analysisResult, null, 2));
+
     if (!analysisResult || !analysisResult.insights) {
       console.log('No analysis result or insights available');
-      return null;
+      return <p>No analysis results available.</p>;
     }
-  
-    console.log('Rendering analysis result:', analysisResult);
-  
+
     const { writing_style, key_themes, conclusion } = analysisResult.insights;
-  
+
+    console.log('Extracted data:', { writing_style, key_themes, conclusion });
+
     return (
       <div className="space-y-6">
         {writing_style && writing_style.length > 0 && (
@@ -141,7 +143,7 @@ const MainPage = () => {
             </ul>
           </section>
         )}
-  
+
         {key_themes && key_themes.length > 0 && (
           <section>
             <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
@@ -152,7 +154,7 @@ const MainPage = () => {
             </ul>
           </section>
         )}
-  
+
         {conclusion && (
           <section>
             <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
@@ -161,8 +163,8 @@ const MainPage = () => {
         )}
       </div>
     );
-  };
-  
+  }, [analysisResult]);
+
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
       {showConfetti && <ReactConfetti />}
@@ -231,6 +233,9 @@ const MainPage = () => {
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
               {renderAnalysisResult()}
+              {!analysisResult.insights && (
+                <p>Analysis completed, but no insights were generated. Raw result: {JSON.stringify(analysisResult)}</p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
