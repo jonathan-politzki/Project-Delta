@@ -148,11 +148,11 @@ const MainPage = () => {
 
   const renderAnalysisResult = useMemo(() => {
     const { result } = analysisState;
-    if (!result || !result.result) {
+    if (!result || !result.result || !result.result.insights) {
       return <p>No analysis results available.</p>;
     }
 
-    const insights = result.result;
+    const insights = result.result.insights;
 
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
@@ -169,33 +169,19 @@ const MainPage = () => {
       </ul>
     );
 
-    const essays = insights.insights.split('The provided text').filter(text => text.trim());
-
     const renderEssayInsights = () => (
       <div className="space-y-4">
-        {essays.map((essay, index) => {
-          const lines = essay.split('\n');
-          const title = lines[0].includes(':') ? lines[0].split(':')[1].trim() : `Essay ${index + 1}`;
-          const keyThemes = lines
-            .filter(line => line.includes('**'))
-            .map(line => line.replace(/\*\*/g, '').trim())
-            .filter(line => !line.toLowerCase().includes('writing style'));
+        {insights.key_themes.map((theme, index) => {
+          const title = `Essay ${index + 1}`;
           return (
             <div key={index} className="bg-slate-700 rounded p-3">
               <h4 className="text-lg font-semibold text-white mb-2">{title}</h4>
-              {renderBulletPoints(keyThemes.slice(0, 3).map(theme => theme.split(':')[1].trim()))}
+              {renderBulletPoints([theme])}
             </div>
           );
         })}
       </div>
     );
-
-    const writingInsights = [
-      `Writing Style: ${insights.writing_style}`,
-      `Overall Sentiment: ${insights.sentiment}`,
-      `Readability Score: ${insights.readability_score.toFixed(2)}`,
-      `Essays Analyzed: ${insights.post_count}`
-    ];
 
     return (
       <div className="space-y-6">
@@ -204,11 +190,6 @@ const MainPage = () => {
             {renderEssayInsights()}
           </>,
           "text-blue-400"
-        )}
-        
-        {renderSection("Writing Insights", 
-          renderBulletPoints(writingInsights),
-          "text-green-400"
         )}
       </div>
     );

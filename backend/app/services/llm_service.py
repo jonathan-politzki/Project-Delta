@@ -20,7 +20,7 @@ async def extract_concepts(text: str) -> dict:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a highly intelligent scholar tasked with extracting the main ideas from a text. Take this text and extract the main 3 big concepts in a standalone way, describing only the semantic meaning and not syntax or style."},
+                {"role": "system", "content": "You are an AI model tasked with extracting the main ideas from a text. Take this text and extract the main 3 big concepts in a standalone way, describing only the ideas."},
                 {"role": "user", "content": text}
             ],
             temperature=0.1
@@ -85,7 +85,7 @@ async def combine_concepts(all_concepts: list) -> dict:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given concepts from multiple essays and synthesize them into 3 overarching trends in the type of ideas discussed. Make sure to do this relative to the standard text or opinion to reflect how this text is differentiated vs common ideas or knowledge."},
+                {"role": "system", "content": "You are an AI model that is trained to detect consistencies in ideas. Analyze the given concepts from multiple essays and synthesize them into 3 overarching trends in the type of ideas discussed. In this process, synthesize with the intent of comparing the ideas to traditional ideas or knowledge and finding the major differences in the ideas."},
                 {"role": "user", "content": combined_text}
             ],
             temperature=0.1
