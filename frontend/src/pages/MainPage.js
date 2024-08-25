@@ -174,7 +174,7 @@ const MainPage = () => {
         transition={{ duration: 0.5 }}
       >
         <AnimatePresence>
-          {analysisResult && (
+          {analysisResult && analysisResult.individual_concepts && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -187,7 +187,7 @@ const MainPage = () => {
               {analysisResult.individual_concepts.map((essay, index) => (
                 <div key={index} className="mb-8 border-b border-gray-700 pb-4">
                   <h3 className="text-xl font-semibold mt-4 mb-2">Essay {index + 1} Concepts</h3>
-                  {essay.core_concepts.map((concept, cIndex) => (
+                  {essay.core_concepts && essay.core_concepts.map((concept, cIndex) => (
                     <div key={cIndex} className="mb-4">
                       <h4 className="text-lg font-medium text-blue-400">{concept.title}</h4>
                       <p className="text-gray-300">{concept.description}</p>
@@ -198,14 +198,18 @@ const MainPage = () => {
                 </div>
               ))}
 
-              <h3 className="text-xl font-semibold mt-6 mb-2">Top 5 Aggregated Concepts</h3>
-              <ul className="list-disc pl-5">
-                {analysisResult.aggregated_concepts.map((item, index) => (
-                  <li key={index} className="mb-2">
-                    <span className="font-medium text-yellow-400">{item.concept}</span> (Mentioned {item.count} times)
-                  </li>
-                ))}
-              </ul>
+              {analysisResult.aggregated_concepts && (
+                <>
+                  <h3 className="text-xl font-semibold mt-6 mb-2">Top 5 Aggregated Concepts</h3>
+                  <ul className="list-disc pl-5">
+                    {analysisResult.aggregated_concepts.map((item, index) => (
+                      <li key={index} className="mb-2">
+                        <span className="font-medium text-yellow-400">{item.concept}</span> (Mentioned {item.count} times)
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
