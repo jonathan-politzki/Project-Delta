@@ -120,32 +120,39 @@ const MainPage = () => {
   }, []);
 
   const renderAnalysisResult = () => {
-    if (!analysisResult || !analysisResult.insights) return null;
-
+    if (!analysisResult || !analysisResult.insights) {
+      console.log('No analysis result or insights available');
+      return null;
+    }
+  
     console.log('Rendering analysis result:', analysisResult);
-
+  
     const { writing_style, key_themes, conclusion } = analysisResult.insights;
-
+  
     return (
       <div className="space-y-6">
-        <section>
-          <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
-          <ul className="list-disc pl-5 space-y-2">
-            {writing_style.map((point, index) => (
-              <li key={index} className="text-gray-300">{point}</li>
-            ))}
-          </ul>
-        </section>
-
-        <section>
-          <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
-          <ul className="list-disc pl-5 space-y-2">
-            {key_themes.map((theme, index) => (
-              <li key={index} className="text-gray-300">{theme}</li>
-            ))}
-          </ul>
-        </section>
-
+        {writing_style && writing_style.length > 0 && (
+          <section>
+            <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              {writing_style.map((point, index) => (
+                <li key={index} className="text-gray-300">{point}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+  
+        {key_themes && key_themes.length > 0 && (
+          <section>
+            <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              {key_themes.map((theme, index) => (
+                <li key={index} className="text-gray-300">{theme}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+  
         {conclusion && (
           <section>
             <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
@@ -155,7 +162,7 @@ const MainPage = () => {
       </div>
     );
   };
-
+  
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
       {showConfetti && <ReactConfetti />}
