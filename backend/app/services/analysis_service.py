@@ -1,75 +1,36 @@
 # backend/app/services/analysis_service.py
 
 from collections import Counter
-from nltk import pos_tag, word_tokenize
-import nltk
-from .llm_service import generate_insights
-from .embedding_service import generate_embedding
-from ..core.vector_db import insert_data, search_vectors, USE_MILVUS
 import logging
+from .llm_service import extract_concepts
 
-nltk.download('averaged_perceptron_tagger', quiet=True)
 logger = logging.getLogger(__name__)
 
-async def generate_analysis(processed_text: dict, embedding: list[float]) -> dict:
+def aggregate_concepts(all_concepts):
+    flat_concepts = [concept for essay_concepts in all_concepts for concept in essay_concepts]
+    concept_counts = Counter(flat_concepts)
+    top_5_concepts = concept_counts.most_common(5)
+    
+    return [{"concept": concept, "count": count} for concept, count in top_5_concepts]
+
+async def generate_analysis(processed_text: dict) -> dict:
     logger.info("Generating analysis")
     
     try:
-        # Extract key themes (most common nouns)
-        words = word_tokenize(processed_text['processed_text'])
-        tagged_words = pos_tag(words)
-        nouns = [word.lower() for word, pos in tagged_words if pos.startswith('NN')]
-        key_themes = [theme for theme, _ in Counter(nouns).most_common(5)]
-        
-        # Determine writing style based on sentence length and word choice
-        avg_sentence_length = processed_text['word_count'] / processed_text['sentence_count']
-        if avg_sentence_length > 20:
-            writing_style = "Complex and detailed"
-        elif avg_sentence_length < 10:
-            writing_style = "Concise and to-the-point"
-        else:
-            writing_style = "Balanced and clear"
-        
-        # Generate insights using the LLM
-        insights = await generate_insights(processed_text['processed_text'])
-        
-        # Milvus operations (disabled for now)
-        similar_texts = []
-        if USE_MILVUS:
-            try:
-                insert_data("demo_collection", [{
-                    "vector": embedding,
-                    "text": processed_text['processed_text'][:65535],  # Truncate if necessary
-                    "subject": "analysis"
-                }])
-                logger.info("Successfully inserted data into Milvus")
-                
-                # Perform a similarity search
-                search_results = search_vectors("demo_collection", [embedding], limit=3, output_fields=["text"])
-                similar_texts = [result['entity']['text'] for result in search_results[0] if 'entity' in result and 'text' in result['entity']]
-                logger.info(f"Found {len(similar_texts)} similar texts")
-            except Exception as e:
-                logger.warning(f"Milvus operation failed: {str(e)}")
-        else:
-            logger.info("Milvus operations are disabled.")
+        # Extract concepts using the LLM
+        concepts = await extract_concepts(processed_text['processed_text'])
         
         logger.info("Analysis generated successfully")
         
         return {
-            "insights": insights,
-            "writing_style": writing_style,
-            "key_themes": key_themes,
+            "concepts": concepts,
             "readability_score": processed_text['readability_score'],
-            "sentiment": processed_text['sentiment'],
-            "similar_texts": similar_texts
+            "sentiment": processed_text['sentiment']
         }
     except Exception as e:
         logger.error(f"Error in generate_analysis: {str(e)}", exc_info=True)
         return {
-            "insights": "Error generating insights",
-            "writing_style": "Unknown",
-            "key_themes": [],
+            "concepts": ["Error generating concepts"],
             "readability_score": 0,
-            "sentiment": "Unknown",
-            "similar_texts": []
+            "sentiment": "Unknown"
         }

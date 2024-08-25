@@ -32,7 +32,7 @@ const MainPage = () => {
     const animateScroll = (currentTime) => {
       const elapsedTime = currentTime - startTime;
       const progress = Math.min(elapsedTime / duration, 1);
-      const easeProgress = 0.5 - Math.cos(progress * Math.PI) / 2; // Easing function for smooth animation
+      const easeProgress = 0.5 - Math.cos(progress * Math.PI) / 2;
       window.scrollTo(0, start + (end - start) * easeProgress);
 
       if (progress < 1) {
@@ -183,12 +183,29 @@ const MainPage = () => {
               className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-              <p><strong>Insights:</strong> {analysisResult.insights}</p>
-              <p><strong>Writing Style:</strong> {analysisResult.writing_style}</p>
-              <p><strong>Key Themes:</strong> {analysisResult.key_themes.join(', ')}</p>
-              <p><strong>Readability Score:</strong> {analysisResult.readability_score.toFixed(2)}</p>
-              <p><strong>Sentiment:</strong> {analysisResult.sentiment}</p>
-              <p><strong>Post Count:</strong> {analysisResult.post_count}</p>
+              
+              {analysisResult.individual_concepts.map((essay, index) => (
+                <div key={index} className="mb-8 border-b border-gray-700 pb-4">
+                  <h3 className="text-xl font-semibold mt-4 mb-2">Essay {index + 1} Concepts</h3>
+                  {essay.core_concepts.map((concept, cIndex) => (
+                    <div key={cIndex} className="mb-4">
+                      <h4 className="text-lg font-medium text-blue-400">{concept.title}</h4>
+                      <p className="text-gray-300">{concept.description}</p>
+                    </div>
+                  ))}
+                  <h4 className="text-lg font-medium mt-4 text-green-400">Overarching Concept</h4>
+                  <p className="text-gray-300">{essay.overarching_concept}</p>
+                </div>
+              ))}
+
+              <h3 className="text-xl font-semibold mt-6 mb-2">Top 5 Aggregated Concepts</h3>
+              <ul className="list-disc pl-5">
+                {analysisResult.aggregated_concepts.map((item, index) => (
+                  <li key={index} className="mb-2">
+                    <span className="font-medium text-yellow-400">{item.concept}</span> (Mentioned {item.count} times)
+                  </li>
+                ))}
+              </ul>
             </motion.div>
           )}
         </AnimatePresence>

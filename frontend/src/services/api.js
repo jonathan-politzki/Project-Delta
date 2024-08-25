@@ -16,10 +16,15 @@ export const analyzeUrl = async (url) => {
     console.log('Sending analysis request for URL:', url);
     const response = await api.post('/api/v1/analysis/', { url });
     console.log('Received analysis response:', response.data);
+    
+    if (!response.data || !response.data.task_id) {
+      throw new Error('Invalid response from server');
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error in analyzeUrl:', error.response?.data || error.message);
-    throw error;
+    throw error.response?.data || error;
   }
 };
 
@@ -28,9 +33,14 @@ export const getAnalysisStatus = async (taskId) => {
     console.log('Checking status for task:', taskId);
     const response = await api.get(`/api/v1/analysis/status/${taskId}`);
     console.log('Received status update:', response.data);
+    
+    if (!response.data || !response.data.status) {
+      throw new Error('Invalid status response from server');
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error in getAnalysisStatus:', error.response?.data || error.message);
-    throw error;
+    throw error.response?.data || error;
   }
 };
