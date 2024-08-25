@@ -75,6 +75,7 @@ const MainPage = () => {
   
         switch (result.status) {
           case 'completed':
+            console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
               result: result.result,
@@ -146,12 +147,15 @@ const MainPage = () => {
   }, [url, pollForResults]);
 
   const renderAnalysisResult = useCallback(() => {
+    console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
     const { result } = analysisState;
     if (!result || !result.combined_analysis) {
+      console.log('No result or combined_analysis available');
       return <p>No analysis results available.</p>;
     }
   
     const { combined_analysis } = result;
+    console.log('Combined analysis:', JSON.stringify(combined_analysis, null, 2));
   
     return (
       <div className="space-y-6">
