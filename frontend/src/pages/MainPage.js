@@ -17,16 +17,18 @@ const LoadingBar = ({ progress }) => (
 
 const MainPage = () => {
   const [url, setUrl] = useState('');
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [analysisState, setAnalysisState] = useState({
+    result: null,
+    isLoading: false,
+    error: null,
+    progress: 0,
+    isComplete: false,
+  });
   const [showConfetti, setShowConfetti] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const resultsRef = useRef(null);
 
   const scrollToResults = useCallback((duration = 3500) => {
-    setIsAnalysisComplete(true);
+    setAnalysisState(prev => ({ ...prev, isComplete: true }));
     const start = window.pageYOffset;
     const end = resultsRef.current?.offsetTop ?? 0;
     const startTime = performance.now();
@@ -53,57 +55,58 @@ const MainPage = () => {
   }, [showConfetti]);
 
   const pollForResults = useCallback(async (taskId) => {
-    const pollInterval = 5000; // 5 seconds
-    const maxAttempts = 60; // 5 minutes total
-    let attempts = 0;
+    const pollInterval = 5000;
+    const maxAttempts = 60;
 
-    while (attempts < maxAttempts) {
+    const poll = async (attempts) => {
+      if (attempts >= maxAttempts) {
+        setAnalysisState(prev => ({ ...prev, error: 'Analysis timed out. Please try again later.', isLoading: false }));
+        return;
+      }
+
       try {
         const result = await getAnalysisStatus(taskId);
         console.log('Status update:', JSON.stringify(result, null, 2));
         
         if (result.status === 'completed') {
-          console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
-          console.log('Setting analysisResult to:', result.result);
-          setAnalysisResult(result.result);
-          setProgress(100);
+          setAnalysisState(prev => ({
+            ...prev,
+            result: result.result,
+            isLoading: false,
+            progress: 100,
+          }));
           setShowConfetti(true);
-          setTimeout(() => {
-            scrollToResults(3500); // Scroll duration set to 3.5 seconds
-          }, 1000); // Delay scrolling to allow confetti to be visible
-          return;
+          setTimeout(() => scrollToResults(3500), 1000);
         } else if (result.status === 'error') {
           throw new Error(result.message || 'An error occurred during analysis.');
         } else if (result.status === 'processing') {
-          if (typeof result.progress === 'number') {
-            setProgress(result.progress);
-          } else {
-            // Fallback progress calculation
-            setProgress(Math.min(Math.round((attempts / maxAttempts) * 100), 99));
-          }
+          setAnalysisState(prev => ({
+            ...prev,
+            progress: typeof result.progress === 'number' ? result.progress : Math.min(Math.round((attempts / maxAttempts) * 100), 99),
+          }));
+          setTimeout(() => poll(attempts + 1), pollInterval);
         } else {
           console.warn('Unknown status received:', result.status);
+          setTimeout(() => poll(attempts + 1), pollInterval);
         }
-        
-        attempts++;
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
       } catch (err) {
         console.error('Error in pollForResults:', err);
-        setError(`Error checking analysis status: ${err.message}`);
-        return;
+        setAnalysisState(prev => ({ ...prev, error: `Error checking analysis status: ${err.message}`, isLoading: false }));
       }
-    }
+    };
 
-    setError('Analysis timed out. Please try again later.');
+    poll(0);
   }, [scrollToResults]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setAnalysisResult(null);
-    setProgress(0);
-    setIsAnalysisComplete(false);
+    setAnalysisState({
+      result: null,
+      isLoading: true,
+      error: null,
+      progress: 0,
+      isComplete: false,
+    });
 
     try {
       const result = await analyzeUrl(url);
@@ -114,72 +117,50 @@ const MainPage = () => {
       await pollForResults(result.task_id);
     } catch (err) {
       console.error('Error during analysis:', err);
-      setError(`An error occurred while analyzing the URL: ${err.message}`);
-    } finally {
-      setIsLoading(false);
+      setAnalysisState(prev => ({ ...prev, error: `An error occurred while analyzing the URL: ${err.message}`, isLoading: false }));
     }
   }, [url, pollForResults]);
 
   const renderAnalysisResult = useCallback(() => {
-    console.log('Rendering analysis result. Full analysisResult:', JSON.stringify(analysisResult, null, 2));
-  
-    if (!analysisResult || !analysisResult.insights) {
-      console.log('No analysis result or insights available');
+    const { result } = analysisState;
+    if (!result || !result.insights) {
       return <p>No analysis results available.</p>;
     }
-  
-    const { insights, writing_style, key_themes, readability_score, sentiment, post_count } = analysisResult.insights;
-  
-    console.log('Extracted data:', { insights, writing_style, key_themes, readability_score, sentiment, post_count });
-  
+
+    const { insights } = result;
     return (
       <div className="space-y-6">
-        {writing_style && (
+        {insights.writing_style && (
           <section>
             <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
-            <p className="text-gray-300">{writing_style}</p>
+            <ul className="list-disc pl-5 space-y-2">
+              {insights.writing_style.map((style, index) => (
+                <li key={index} className="text-gray-300">{style}</li>
+              ))}
+            </ul>
           </section>
         )}
-  
-        {key_themes && key_themes.length > 0 && (
+        
+        {insights.key_themes && insights.key_themes.length > 0 && (
           <section>
             <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
             <ul className="list-disc pl-5 space-y-2">
-              {key_themes.map((theme, index) => (
+              {insights.key_themes.map((theme, index) => (
                 <li key={index} className="text-gray-300">{theme}</li>
               ))}
             </ul>
           </section>
         )}
-  
-        {insights && (
+        
+        {insights.conclusion && (
           <section>
-            <h3 className="text-xl font-semibold text-yellow-400">Detailed Insights</h3>
-            <p className="text-gray-300 whitespace-pre-wrap">{insights}</p>
+            <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
+            <p className="text-gray-300 whitespace-pre-wrap">{insights.conclusion}</p>
           </section>
         )}
-  
-        <section>
-          <h3 className="text-xl font-semibold text-purple-400">Additional Information</h3>
-          {readability_score !== undefined && (
-            <p className="text-gray-300">Readability Score: {readability_score.toFixed(2)}</p>
-          )}
-          {sentiment && <p className="text-gray-300">Sentiment: {sentiment}</p>}
-          {post_count !== undefined && (
-            <p className="text-gray-300">Number of Posts Analyzed: {post_count}</p>
-          )}
-        </section>
-  
-        {/* Debug information */}
-        <section>
-          <h3 className="text-xl font-semibold text-red-400">Debug Information</h3>
-          <pre className="text-gray-300 whitespace-pre-wrap text-sm">
-            {JSON.stringify(analysisResult, null, 2)}
-          </pre>
-        </section>
       </div>
     );
-  }, [analysisResult]);    
+  }, [analysisState]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
@@ -207,22 +188,22 @@ const MainPage = () => {
             <button
               className="flex-shrink-0 bg-white hover:bg-gray-200 text-slate-900 font-bold py-2 px-4 rounded"
               type="submit"
-              disabled={isLoading}
+              disabled={analysisState.isLoading}
             >
-              {isLoading ? 'Analyzing...' : 'Analyze'}
+              {analysisState.isLoading ? 'Analyzing...' : 'Analyze'}
             </button>
           </div>
         </form>
         
-        {isLoading && (
+        {analysisState.isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="w-full max-w-md text-center"
           >
-            <LoadingBar progress={progress} />
+            <LoadingBar progress={analysisState.progress} />
             <p className="text-gray-300 mt-2">
-              Analysis in progress: {progress}% complete
+              Analysis in progress: {analysisState.progress}% complete
             </p>
             <p className="text-gray-300 mt-2">
               This may take a few minutes...
@@ -235,11 +216,11 @@ const MainPage = () => {
         ref={resultsRef}
         className="min-h-screen flex flex-col items-center justify-start p-4 bg-slate-900 border-t-4 border-gray-300"
         initial={{ opacity: 0 }}
-        animate={{ opacity: isAnalysisComplete ? 1 : 0 }}
+        animate={{ opacity: analysisState.isComplete ? 1 : 0 }}
         transition={{ duration: 0.5 }}
       >
         <AnimatePresence>
-          {analysisResult && (
+          {analysisState.result && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -253,8 +234,8 @@ const MainPage = () => {
           )}
         </AnimatePresence>
 
-        {error && (
-          <p className="text-red-500 mt-4">{error}</p>
+        {analysisState.error && (
+          <p className="text-red-500 mt-4">{analysisState.error}</p>
         )}
       </motion.div>
     </div>
