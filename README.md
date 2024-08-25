@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Project Delta is an advanced web application designed to analyze writing styles and provide insights into authors' works. Our tool uses cutting-edge natural language processing and machine learning techniques to extract meaningful information from Medium and Substack articles.
+Project Delta is an tool designed to extract the fingerprint of an author and provide insights into authors' works. Our tool uses cutting-edge natural language processing and machine learning techniques to extract meaningful information from Medium and Substack articles.
 
 The primary goal of this tool is to help writers understand their unique voice and compare it with others in the literary world. By analyzing various aspects of writing, including style, themes, sentiment, and readability, we aim to provide valuable insights that can help writers improve their craft and stand out in a sea of content.
 
