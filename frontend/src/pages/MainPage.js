@@ -149,35 +149,37 @@ const MainPage = () => {
   const renderAnalysisResult = useCallback(() => {
     console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
     const { result } = analysisState;
-    if (!result || !result.combined_analysis) {
-      console.log('No result or combined_analysis available');
+    if (!result || !result.insights) {
+      console.log('No result or insights available');
       return <p>No analysis results available.</p>;
     }
-  
-    const { combined_analysis } = result;
-    console.log('Combined analysis:', JSON.stringify(combined_analysis, null, 2));
-  
+
+    const { insights } = result;
+    console.log('Insights:', JSON.stringify(insights, null, 2));
+
     return (
       <div className="space-y-6">
         <section>
-          <h3 className="text-xl font-semibold text-blue-400">Key Concepts and Ideas</h3>
-          <ul className="list-disc pl-5 space-y-4">
-            {combined_analysis.combined_concepts.map((concept, index) => (
-              <li key={index} className="text-gray-300">
-                <p><strong>{concept}</strong></p>
-              </li>
+          <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
+          <p className="text-gray-300">{insights.writing_style}</p>
+        </section>
+        <section>
+          <h3 className="text-xl font-semibold text-yellow-400">Key Themes</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            {insights.key_themes.map((theme, index) => (
+              <li key={index} className="text-gray-300">{theme}</li>
             ))}
           </ul>
         </section>
         <section>
-          <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
-          <p className="text-gray-300">{combined_analysis.conclusion}</p>
+          <h3 className="text-xl font-semibold text-green-400">Analysis</h3>
+          <p className="text-gray-300">{insights}</p>
         </section>
         <section>
-          <h3 className="text-xl font-semibold text-green-400">Additional Information</h3>
-          <p className="text-gray-300">Average Readability Score: {combined_analysis.avg_readability_score.toFixed(2)}</p>
-          <p className="text-gray-300">Overall Sentiment: {combined_analysis.overall_sentiment}</p>
-          <p className="text-gray-300">Essays Analyzed: {combined_analysis.essays_analyzed}</p>
+          <h3 className="text-xl font-semibold text-purple-400">Additional Information</h3>
+          <p className="text-gray-300">Readability Score: {insights.readability_score.toFixed(2)}</p>
+          <p className="text-gray-300">Sentiment: {insights.sentiment}</p>
+          <p className="text-gray-300">Posts Analyzed: {insights.post_count}</p>
         </section>
       </div>
     );
