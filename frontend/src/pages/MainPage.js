@@ -64,6 +64,7 @@ const MainPage = () => {
         
         if (result.status === 'completed') {
           console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
+          console.log('Setting analysisResult to:', result.result);
           setAnalysisResult(result.result);
           setProgress(100);
           setShowConfetti(true);
@@ -131,34 +132,44 @@ const MainPage = () => {
   
     return (
       <div className="space-y-6">
-        <section>
-          <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
-          <p className="text-gray-300">{writing_style}</p>
-        </section>
+        {writing_style && (
+          <section>
+            <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
+            <p className="text-gray-300">{writing_style}</p>
+          </section>
+        )}
   
-        <section>
-          <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
-          <ul className="list-disc pl-5 space-y-2">
-            {key_themes.map((theme, index) => (
-              <li key={index} className="text-gray-300">{theme}</li>
-            ))}
-          </ul>
-        </section>
+        {key_themes && key_themes.length > 0 && (
+          <section>
+            <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              {key_themes.map((theme, index) => (
+                <li key={index} className="text-gray-300">{theme}</li>
+              ))}
+            </ul>
+          </section>
+        )}
   
-        <section>
-          <h3 className="text-xl font-semibold text-yellow-400">Detailed Insights</h3>
-          <p className="text-gray-300 whitespace-pre-wrap">{insights}</p>
-        </section>
+        {insights && (
+          <section>
+            <h3 className="text-xl font-semibold text-yellow-400">Detailed Insights</h3>
+            <p className="text-gray-300 whitespace-pre-wrap">{insights}</p>
+          </section>
+        )}
   
         <section>
           <h3 className="text-xl font-semibold text-purple-400">Additional Information</h3>
-          <p className="text-gray-300">Readability Score: {readability_score.toFixed(2)}</p>
-          <p className="text-gray-300">Sentiment: {sentiment}</p>
-          <p className="text-gray-300">Number of Posts Analyzed: {post_count}</p>
+          {readability_score !== undefined && (
+            <p className="text-gray-300">Readability Score: {readability_score.toFixed(2)}</p>
+          )}
+          {sentiment && <p className="text-gray-300">Sentiment: {sentiment}</p>}
+          {post_count !== undefined && (
+            <p className="text-gray-300">Number of Posts Analyzed: {post_count}</p>
+          )}
         </section>
       </div>
     );
-  }, [analysisResult]);  
+  }, [analysisResult]);    
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
