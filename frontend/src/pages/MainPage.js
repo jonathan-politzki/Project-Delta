@@ -155,50 +155,62 @@ const MainPage = () => {
     const insights = result.result;
 
     const renderSection = (title, content, color) => (
-      <section className="bg-slate-800 rounded-lg p-4 shadow-md">
+      <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
         <h3 className={`text-xl font-semibold ${color} mb-2`}>{title}</h3>
         {content}
       </section>
     );
 
-    const renderEssayInsights = (essays) => (
-      <div className="space-y-4">
-        {essays.map((essay, index) => (
-          <div key={index} className="bg-slate-700 rounded p-3">
-            <h4 className="text-lg font-semibold text-white mb-2">{essay.title}</h4>
-            <ul className="list-disc pl-5 space-y-1">
-              {essay.concepts.map((concept, idx) => (
-                <li key={idx} className="text-gray-300">{concept}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    );
-
     const renderBulletPoints = (items) => (
       <ul className="list-disc pl-5 space-y-1">
         {items.map((item, index) => (
-          <li key={index} className="text-gray-300">{item}</li>
+          <li key={index} className="text-gray-300">{item.trim()}</li>
         ))}
       </ul>
     );
 
-    const combinedInsights = [
-      `Writing Style: ${insights.overall_analysis.writing_style || 'Not available'}`,
-      `Overall Sentiment: ${insights.overall_analysis.sentiment || 'Not available'}`,
-      `Key Concepts: ${(insights.overall_analysis.key_themes || []).join(', ')}`,
+    const essays = insights.insights.split('The provided text').filter(text => text.trim());
+
+    const renderEssayInsights = () => (
+      <div className="space-y-4">
+        {essays.map((essay, index) => {
+          const lines = essay.split('\n');
+          const title = lines[0].includes(':') ? lines[0].split(':')[1].trim() : `Essay ${index + 1}`;
+          const keyThemes = lines
+            .filter(line => line.includes('**'))
+            .map(line => line.replace(/\*\*/g, '').trim())
+            .filter(line => !line.toLowerCase().includes('writing style'));
+          return (
+            <div key={index} className="bg-slate-700 rounded p-3">
+              <h4 className="text-lg font-semibold text-white mb-2">{title}</h4>
+              {renderBulletPoints(keyThemes.slice(0, 3).map(theme => theme.split(':')[1].trim()))}
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    const overallTheme = `Overall Theme: ${insights.key_themes.slice(0, 3).join(', ')}`;
+
+    const writingInsights = [
+      `Writing Style: ${insights.writing_style}`,
+      `Overall Sentiment: ${insights.sentiment}`,
+      `Readability Score: ${insights.readability_score.toFixed(2)}`,
+      `Essays Analyzed: ${insights.post_count}`
     ];
 
     return (
       <div className="space-y-6">
-        {renderSection("Main Concepts Extracted", 
-          renderEssayInsights(insights.essays || []),
+        {renderSection("Main Concepts", 
+          <>
+            <p className="text-yellow-300 font-semibold mb-2">{overallTheme}</p>
+            {renderEssayInsights()}
+          </>,
           "text-blue-400"
         )}
         
         {renderSection("Writing Insights", 
-          renderBulletPoints(combinedInsights),
+          renderBulletPoints(writingInsights),
           "text-green-400"
         )}
       </div>
