@@ -121,49 +121,44 @@ const MainPage = () => {
 
   const renderAnalysisResult = useCallback(() => {
     console.log('Rendering analysis result. Full analysisResult:', JSON.stringify(analysisResult, null, 2));
-
+  
     if (!analysisResult || !analysisResult.insights) {
       console.log('No analysis result or insights available');
       return <p>No analysis results available.</p>;
     }
-
-    const { writing_style, key_themes, conclusion } = analysisResult.insights;
-
-    console.log('Extracted data:', { writing_style, key_themes, conclusion });
-
+  
+    const { insights, writing_style, key_themes, readability_score, sentiment, post_count } = analysisResult.insights;
+  
     return (
       <div className="space-y-6">
-        {writing_style && writing_style.length > 0 && (
-          <section>
-            <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
-            <ul className="list-disc pl-5 space-y-2">
-              {writing_style.map((point, index) => (
-                <li key={index} className="text-gray-300">{point}</li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {key_themes && key_themes.length > 0 && (
-          <section>
-            <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
-            <ul className="list-disc pl-5 space-y-2">
-              {key_themes.map((theme, index) => (
-                <li key={index} className="text-gray-300">{theme}</li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {conclusion && (
-          <section>
-            <h3 className="text-xl font-semibold text-yellow-400">Conclusion</h3>
-            <p className="text-gray-300">{conclusion}</p>
-          </section>
-        )}
+        <section>
+          <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
+          <p className="text-gray-300">{writing_style}</p>
+        </section>
+  
+        <section>
+          <h3 className="text-xl font-semibold text-green-400">Key Themes</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            {key_themes.map((theme, index) => (
+              <li key={index} className="text-gray-300">{theme}</li>
+            ))}
+          </ul>
+        </section>
+  
+        <section>
+          <h3 className="text-xl font-semibold text-yellow-400">Detailed Insights</h3>
+          <p className="text-gray-300 whitespace-pre-wrap">{insights}</p>
+        </section>
+  
+        <section>
+          <h3 className="text-xl font-semibold text-purple-400">Additional Information</h3>
+          <p className="text-gray-300">Readability Score: {readability_score.toFixed(2)}</p>
+          <p className="text-gray-300">Sentiment: {sentiment}</p>
+          <p className="text-gray-300">Number of Posts Analyzed: {post_count}</p>
+        </section>
       </div>
     );
-  }, [analysisResult]);
+  }, [analysisResult]);  
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
@@ -233,9 +228,6 @@ const MainPage = () => {
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
               {renderAnalysisResult()}
-              {!analysisResult.insights && (
-                <p>Analysis completed, but no insights were generated. Raw result: {JSON.stringify(analysisResult)}</p>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
