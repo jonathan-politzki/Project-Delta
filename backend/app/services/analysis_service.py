@@ -66,11 +66,20 @@ async def generate_full_analysis(processed_essays: list) -> dict:
         # Analyze all essays combined
         combined_analysis = await analyze_multiple_essays(processed_essays)
 
+        # Structure individual essay data
+        essays_data = []
+        for i, essay in enumerate(processed_essays):
+            essay_analysis = await generate_analysis(essay)
+            essays_data.append({
+                "title": f"Essay {i+1}",  # or essay['title'] if available
+                "concepts": essay_analysis['concepts'][:3]  # Limit to top 3 concepts
+            })
+
         return {
-            "insights": {
+            "essays": essays_data,
+            "overall_analysis": {
+                "writing_style": combined_analysis['conclusion'],
                 "key_themes": combined_analysis['combined_concepts'],
-                "conclusion": combined_analysis['conclusion'],
-                "writing_style": "Not available",
                 "readability_score": combined_analysis['avg_readability_score'],
                 "sentiment": combined_analysis['overall_sentiment'],
                 "post_count": combined_analysis['essays_analyzed']
@@ -79,10 +88,10 @@ async def generate_full_analysis(processed_essays: list) -> dict:
     except Exception as e:
         logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)
         return {
-            "insights": {
-                "key_themes": [],
-                "conclusion": f"Error generating full analysis: {str(e)}",
+            "essays": [],
+            "overall_analysis": {
                 "writing_style": "Not available",
+                "key_themes": [],
                 "readability_score": 0,
                 "sentiment": "Unknown",
                 "post_count": 0

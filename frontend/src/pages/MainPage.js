@@ -161,10 +161,20 @@ const MainPage = () => {
       </section>
     );
 
-    const summarizeText = (text, maxLength = 300) => {
-      if (text.length <= maxLength) return text;
-      return text.substr(0, text.lastIndexOf(' ', maxLength)) + '...';
-    };
+    const renderEssayInsights = (essays) => (
+      <div className="space-y-4">
+        {essays.map((essay, index) => (
+          <div key={index} className="bg-slate-700 rounded p-3">
+            <h4 className="text-lg font-semibold text-white mb-2">{essay.title}</h4>
+            <ul className="list-disc pl-5 space-y-1">
+              {essay.concepts.map((concept, idx) => (
+                <li key={idx} className="text-gray-300">{concept}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    );
 
     const renderBulletPoints = (items) => (
       <ul className="list-disc pl-5 space-y-1">
@@ -175,21 +185,21 @@ const MainPage = () => {
     );
 
     const combinedInsights = [
-      `Writing Style: ${insights.writing_style || 'Not available'}`,
-      `Overall Sentiment: ${insights.sentiment || 'Not available'}`,
-      `Key Concepts: ${(insights.key_themes || []).join(', ')}`,
+      `Writing Style: ${insights.overall_analysis.writing_style || 'Not available'}`,
+      `Overall Sentiment: ${insights.overall_analysis.sentiment || 'Not available'}`,
+      `Key Concepts: ${(insights.overall_analysis.key_themes || []).join(', ')}`,
     ];
 
     return (
       <div className="space-y-6">
-        {renderSection("Author's Personality Fingerprint", 
-          <p className="text-gray-300">{summarizeText(insights.insights || 'Not available')}</p>,
-          "text-yellow-400"
+        {renderSection("Main Concepts Extracted", 
+          renderEssayInsights(insights.essays || []),
+          "text-blue-400"
         )}
         
         {renderSection("Writing Insights", 
           renderBulletPoints(combinedInsights),
-          "text-blue-400"
+          "text-green-400"
         )}
       </div>
     );
