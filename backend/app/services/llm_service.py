@@ -20,7 +20,7 @@ async def extract_concepts(text: str) -> dict:
         response = await client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given text and extract the 3 main concepts that make up the author's personality fingerprint, describe the writing style, and provide an overall conclusion."},
+                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given text and extract the 3 main concepts that make up the author's personality fingerprint, describe the writing style, and provide an overall conclusion. Do not focus on writing style, grammer, or readability at all. Focus solely on the ideas in the text from an unbiased perspective to extract them in isolation."},
                 {"role": "user", "content": text}
             ],
             temperature=0.1

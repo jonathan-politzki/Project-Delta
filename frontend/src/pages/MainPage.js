@@ -190,8 +190,6 @@ const MainPage = () => {
       </div>
     );
 
-    const overallTheme = `Overall Theme: ${insights.key_themes.slice(0, 3).join(', ')}`;
-
     const writingInsights = [
       `Writing Style: ${insights.writing_style}`,
       `Overall Sentiment: ${insights.sentiment}`,
@@ -203,7 +201,6 @@ const MainPage = () => {
       <div className="space-y-6">
         {renderSection("Main Concepts", 
           <>
-            <p className="text-yellow-300 font-semibold mb-2">{overallTheme}</p>
             {renderEssayInsights()}
           </>,
           "text-blue-400"
