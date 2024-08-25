@@ -130,6 +130,8 @@ const MainPage = () => {
   
     const { insights, writing_style, key_themes, readability_score, sentiment, post_count } = analysisResult.insights;
   
+    console.log('Extracted data:', { insights, writing_style, key_themes, readability_score, sentiment, post_count });
+  
     return (
       <div className="space-y-6">
         {writing_style && (
@@ -166,6 +168,14 @@ const MainPage = () => {
           {post_count !== undefined && (
             <p className="text-gray-300">Number of Posts Analyzed: {post_count}</p>
           )}
+        </section>
+  
+        {/* Debug information */}
+        <section>
+          <h3 className="text-xl font-semibold text-red-400">Debug Information</h3>
+          <pre className="text-gray-300 whitespace-pre-wrap text-sm">
+            {JSON.stringify(analysisResult, null, 2)}
+          </pre>
         </section>
       </div>
     );
