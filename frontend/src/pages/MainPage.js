@@ -83,6 +83,13 @@ const MainPage = () => {
               progress: 100,
               isComplete: true
             }));
+            console.log('Updated analysisState:', JSON.stringify({
+              ...analysisState,
+              result: result,
+              isLoading: false,
+              progress: 100,
+              isComplete: true
+            }, null, 2));
             setShowConfetti(true);
             setTimeout(() => scrollToResults(3500), 1000);
             break;
@@ -149,12 +156,20 @@ const MainPage = () => {
   const renderAnalysisResult = useCallback(() => {
     console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
     const { result } = analysisState;
-    if (!result || !result.insights) {
-      console.log('No result or insights available');
+    if (!result) {
+      console.log('No result available');
       return <p>No analysis results available.</p>;
     }
 
-    const { insights } = result;
+    console.log('Result:', JSON.stringify(result, null, 2));
+
+    const insights = result.insights || result;  // Try both structures
+
+    if (!insights || typeof insights !== 'object') {
+      console.log('No valid insights available in the result');
+      return <p>No analysis insights available.</p>;
+    }
+
     console.log('Insights:', JSON.stringify(insights, null, 2));
 
     return (
