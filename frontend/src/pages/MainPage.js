@@ -148,7 +148,7 @@ const MainPage = () => {
 
   const renderAnalysisResult = useMemo(() => {
     const { result } = analysisState;
-    if (!result || !result.result || !result.result.insights) {
+    if (!result || !result.result || !result.result.insights || !result.result.insights.key_themes) {
       return <p>No analysis results available.</p>;
     }
 
@@ -164,13 +164,13 @@ const MainPage = () => {
     const renderBulletPoints = (items) => (
       <ul className="list-disc pl-5 space-y-1">
         {items.map((item, index) => (
-          <li key={index} className="text-gray-300">{item.trim()}</li>
+          <li key={index} className="text-gray-300">{item}</li>
         ))}
       </ul>
     );
 
     const renderKeyThemes = () => {
-      if (!insights.key_themes || !Array.isArray(insights.key_themes)) {
+      if (!Array.isArray(insights.key_themes) || insights.key_themes.length === 0) {
         return <p>No key themes available.</p>;
       }
       return renderBulletPoints(insights.key_themes);
