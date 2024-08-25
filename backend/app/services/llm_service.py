@@ -1,10 +1,11 @@
+# llm_service.py
+
 from openai import AsyncOpenAI
 from app.core.config import LLM_PROVIDER, OPENAI_API_KEY
 import logging
 
 client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 logger = logging.getLogger(__name__)
-
 
 async def extract_concepts(text: str) -> dict:
     if LLM_PROVIDER != "openai":
@@ -19,7 +20,7 @@ async def extract_concepts(text: str) -> dict:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given text and provide: 1) Three to five core concepts, each with a title and a brief description. 2) One overarching concept that encompasses all the core concepts."},
+                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given text and provide: 1) Writing style analysis. 2) Key themes analysis. 3) A brief conclusion."},
                 {"role": "user", "content": text}
             ],
             temperature=0.1
@@ -27,38 +28,35 @@ async def extract_concepts(text: str) -> dict:
 
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
-            # Parse the result into core concepts and overarching concept
-            concepts = parse_concepts(result)
-            logger.info(f"Extracted concepts: {concepts}")
-            return concepts
+            structured_insights = parse_insights(result)
+            logger.info(f"Extracted insights: {structured_insights}")
+            return structured_insights
         else:
             logger.error("No choices returned in response.")
-            return {"core_concepts": [], "overarching_concept": "Error: No concepts extracted."}
+            return {"writing_style": [], "key_themes": [], "conclusion": "Error: No insights extracted."}
 
     except Exception as e:
         logger.error(f"Error in extract_concepts: {e.__class__.__name__}: {str(e)}")
         logger.exception("Full traceback:")
-        return {"core_concepts": [], "overarching_concept": f"Error extracting concepts: {e.__class__.__name__}: {str(e)}"}
+        return {"writing_style": [], "key_themes": [], "conclusion": f"Error extracting insights: {e.__class__.__name__}: {str(e)}"}
 
-def parse_concepts(text: str) -> dict:
-    lines = text.split('\n')
-    core_concepts = []
-    overarching_concept = ""
-    current_concept = {}
+def parse_insights(text: str) -> dict:
+    sections = text.split('###')
+    
+    structured_insights = {
+        "writing_style": [],
+        "key_themes": [],
+        "conclusion": ""
+    }
 
-    for line in lines:
-        if line.startswith("Core Concepts"):
-            continue
-        elif line.startswith("1.") or line.startswith("2.") or line.startswith("3.") or line.startswith("4.") or line.startswith("5."):
-            if current_concept:
-                core_concepts.append(current_concept)
-            current_concept = {"title": line.split(":")[0].strip(), "description": line.split(":")[1].strip()}
-        elif line.startswith("Overarching Concept:"):
-            if current_concept:
-                core_concepts.append(current_concept)
-            overarching_concept = line.split(":")[1].strip()
+    for section in sections:
+        if "Writing Style:" in section:
+            style_points = section.split('\n')[1:]  # Skip the title
+            structured_insights["writing_style"] = [point.strip().strip('1234567890. ') for point in style_points if point.strip()]
+        elif "Key Themes:" in section:
+            theme_points = section.split('\n')[1:]  # Skip the title
+            structured_insights["key_themes"] = [point.strip().strip('1234567890. ') for point in theme_points if point.strip()]
+        elif "Conclusion:" in section:
+            structured_insights["conclusion"] = section.replace("Conclusion:", "").strip()
 
-    if current_concept:
-        core_concepts.append(current_concept)
-
-    return {"core_concepts": core_concepts, "overarching_concept": overarching_concept}
+    return structured_insights
