@@ -169,28 +169,16 @@ const MainPage = () => {
       </ul>
     );
 
-    const renderEssayInsights = () => (
-      <div className="space-y-4">
-        {insights.key_themes.map((theme, index) => {
-          const title = `Essay ${index + 1}`;
-          return (
-            <div key={index} className="bg-slate-700 rounded p-3">
-              <h4 className="text-lg font-semibold text-white mb-2">{title}</h4>
-              {renderBulletPoints([theme])}
-            </div>
-          );
-        })}
-      </div>
-    );
+    const renderKeyThemes = () => {
+      if (!insights.key_themes || !Array.isArray(insights.key_themes)) {
+        return <p>No key themes available.</p>;
+      }
+      return renderBulletPoints(insights.key_themes);
+    };
 
     return (
       <div className="space-y-6">
-        {renderSection("Main Concepts", 
-          <>
-            {renderEssayInsights()}
-          </>,
-          "text-blue-400"
-        )}
+        {renderSection("Key Themes", renderKeyThemes(), "text-blue-400")}
       </div>
     );
   }, [analysisState]);
@@ -206,8 +194,8 @@ const MainPage = () => {
           </ul>
         </nav>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Writer Analysis Tool</h1>
-          <p>Get insights into your writing style</p>
+          <h1 className="text-4xl font-bold mb-2">Content Analysis Tool</h1>
+          <p>Get insights into the key themes of your content</p>
         </div>
         <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
           <div className="flex items-center border-b border-white py-2">
