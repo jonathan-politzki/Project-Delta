@@ -78,7 +78,7 @@ const MainPage = () => {
             console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
-              result: result.result,
+              result: result,
               isLoading: false,
               progress: 100,
               isComplete: true
@@ -149,37 +149,43 @@ const MainPage = () => {
   const renderAnalysisResult = useCallback(() => {
     console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
     const { result } = analysisState;
-    if (!result || !result.insights) {
-      console.log('No result or insights available');
+    if (!result) {
+      console.log('No result available');
       return <p>No analysis results available.</p>;
     }
 
-    const { insights } = result;
+    console.log('Result:', JSON.stringify(result, null, 2));
+
+    const insights = result.insights || result.result?.insights || {};
     console.log('Insights:', JSON.stringify(insights, null, 2));
 
     return (
       <div className="space-y-6">
         <section>
           <h3 className="text-xl font-semibold text-blue-400">Writing Style</h3>
-          <p className="text-gray-300">{insights.writing_style}</p>
+          <p className="text-gray-300">{insights.writing_style || 'Not available'}</p>
         </section>
         <section>
           <h3 className="text-xl font-semibold text-yellow-400">Key Themes</h3>
-          <ul className="list-disc pl-5 space-y-2">
-            {insights.key_themes.map((theme, index) => (
-              <li key={index} className="text-gray-300">{theme}</li>
-            ))}
-          </ul>
+          {Array.isArray(insights.key_themes) ? (
+            <ul className="list-disc pl-5 space-y-2">
+              {insights.key_themes.map((theme, index) => (
+                <li key={index} className="text-gray-300">{theme}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-300">No key themes available</p>
+          )}
         </section>
         <section>
           <h3 className="text-xl font-semibold text-green-400">Analysis</h3>
-          <p className="text-gray-300">{insights}</p>
+          <p className="text-gray-300">{typeof insights === 'string' ? insights : (insights.analysis || 'No analysis available')}</p>
         </section>
         <section>
           <h3 className="text-xl font-semibold text-purple-400">Additional Information</h3>
-          <p className="text-gray-300">Readability Score: {insights.readability_score.toFixed(2)}</p>
-          <p className="text-gray-300">Sentiment: {insights.sentiment}</p>
-          <p className="text-gray-300">Posts Analyzed: {insights.post_count}</p>
+          <p className="text-gray-300">Readability Score: {insights.readability_score ? insights.readability_score.toFixed(2) : 'Not available'}</p>
+          <p className="text-gray-300">Sentiment: {insights.sentiment || 'Not available'}</p>
+          <p className="text-gray-300">Posts Analyzed: {insights.post_count || 'Not available'}</p>
         </section>
       </div>
     );
