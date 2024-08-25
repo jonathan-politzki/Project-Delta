@@ -4,7 +4,7 @@ import uuid
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from app.schemas.analysis_schemas import AnalysisRequest, AnalysisResponse
 from app.services.text_processor import process_text
-from app.services.llm_service import generate_insights
+from app.services.llm_service import extract_concepts
 from app.services.embedding_service import generate_embedding
 from app.services.analysis_service import generate_analysis, aggregate_concepts
 from app.utils.scraper import scrape_url, scraper_output_to_df
