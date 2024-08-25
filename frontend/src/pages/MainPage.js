@@ -55,49 +55,41 @@ const MainPage = () => {
   }, [showConfetti]);
 
   const pollForResults = useCallback(async (taskId) => {
-    const pollInterval = 5000;
     const maxAttempts = 60;
-  
+    const pollInterval = 3000;
+
     const poll = async (attempts) => {
       if (attempts >= maxAttempts) {
         setAnalysisState(prev => ({ 
           ...prev, 
-          error: 'Analysis timed out. Please try again later.', 
+          error: 'Analysis timed out. Please try again.', 
           isLoading: false,
           isComplete: true
         }));
         return;
       }
-  
+
       try {
         const result = await getAnalysisStatus(taskId);
         console.log('Raw API response:', JSON.stringify(result, null, 2));
-        console.log('Status update:', JSON.stringify(result, null, 2));
-  
+        console.log('Status update:', result);
+
         switch (result.status) {
           case 'completed':
-            console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
               result: result,
               isLoading: false,
-              progress: 100,
-              isComplete: true
+              isComplete: true,
+              progress: 100
             }));
-            console.log('Updated analysisState:', JSON.stringify({
-              ...analysisState,
-              result: result,
-              isLoading: false,
-              progress: 100,
-              isComplete: true
-            }, null, 2));
             setShowConfetti(true);
             setTimeout(() => scrollToResults(3500), 1000);
             break;
-  
+
           case 'error':
             throw new Error(result.message || 'An error occurred during analysis.');
-  
+
           case 'processing':
             setAnalysisState(prev => ({
               ...prev,
@@ -107,7 +99,7 @@ const MainPage = () => {
             }));
             setTimeout(() => poll(attempts + 1), pollInterval);
             break;
-  
+
           default:
             console.warn('Unknown status received:', result.status);
             setTimeout(() => poll(attempts + 1), pollInterval);
@@ -122,9 +114,9 @@ const MainPage = () => {
         }));
       }
     };
-  
+
     poll(0);
-  }, [scrollToResults]);
+  }, [scrollToResults, setAnalysisState, setShowConfetti]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -155,46 +147,50 @@ const MainPage = () => {
   }, [url, pollForResults]);
 
   const renderAnalysisResult = useMemo(() => {
-    console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
     const { result } = analysisState;
-    if (!result || !result.insights) {
-      console.log('No result or insights available');
+    if (!result || !result.result) {
       return <p>No analysis results available.</p>;
     }
 
-    console.log('Result:', JSON.stringify(result, null, 2));
+    const insights = result.result;
 
-    const insights = result.insights;
-    console.log('Insights:', JSON.stringify(insights, null, 2));
+    const renderSection = (title, content, color) => (
+      <section className="bg-slate-800 rounded-lg p-4 shadow-md">
+        <h3 className={`text-xl font-semibold ${color} mb-2`}>{title}</h3>
+        {content}
+      </section>
+    );
+
+    const summarizeText = (text, maxLength = 300) => {
+      if (text.length <= maxLength) return text;
+      return text.substr(0, text.lastIndexOf(' ', maxLength)) + '...';
+    };
+
+    const renderBulletPoints = (items) => (
+      <ul className="list-disc pl-5 space-y-1">
+        {items.map((item, index) => (
+          <li key={index} className="text-gray-300">{item}</li>
+        ))}
+      </ul>
+    );
+
+    const combinedInsights = [
+      `Writing Style: ${insights.writing_style || 'Not available'}`,
+      `Overall Sentiment: ${insights.sentiment || 'Not available'}`,
+      `Key Concepts: ${(insights.key_themes || []).join(', ')}`,
+    ];
 
     return (
       <div className="space-y-6">
-        <section>
-          <h3 className="text-xl font-semibold text-blue-400">Key Concepts</h3>
-          {Array.isArray(insights.key_themes) && insights.key_themes.length > 0 ? (
-            <ul className="list-disc pl-5 space-y-2">
-              {insights.key_themes.map((theme, index) => (
-                <li key={index} className="text-gray-300">{theme}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-300">No key concepts available</p>
-          )}
-        </section>
-        <section>
-          <h3 className="text-xl font-semibold text-yellow-400">Author's Personality Fingerprint</h3>
-          <p className="text-gray-300">{insights.conclusion || 'Not available'}</p>
-        </section>
-        <section>
-          <h3 className="text-xl font-semibold text-green-400">Writing Style</h3>
-          <p className="text-gray-300">{insights.writing_style || 'Not available'}</p>
-        </section>
-        <section>
-          <h3 className="text-xl font-semibold text-purple-400">Additional Information</h3>
-          <p className="text-gray-300">Readability Score: {typeof insights.readability_score === 'number' ? insights.readability_score.toFixed(2) : 'Not available'}</p>
-          <p className="text-gray-300">Overall Sentiment: {insights.sentiment || 'Not available'}</p>
-          <p className="text-gray-300">Essays Analyzed: {insights.post_count || 'Not available'}</p>
-        </section>
+        {renderSection("Author's Personality Fingerprint", 
+          <p className="text-gray-300">{summarizeText(insights.insights || 'Not available')}</p>,
+          "text-yellow-400"
+        )}
+        
+        {renderSection("Writing Insights", 
+          renderBulletPoints(combinedInsights),
+          "text-blue-400"
+        )}
       </div>
     );
   }, [analysisState]);
