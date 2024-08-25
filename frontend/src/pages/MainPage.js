@@ -71,6 +71,7 @@ const MainPage = () => {
   
       try {
         const result = await getAnalysisStatus(taskId);
+        console.log('Raw API response:', JSON.stringify(result, null, 2));
         console.log('Status update:', JSON.stringify(result, null, 2));
   
         switch (result.status) {
@@ -156,14 +157,14 @@ const MainPage = () => {
   const renderAnalysisResult = useMemo(() => {
     console.log('Rendering analysis result, analysisState:', JSON.stringify(analysisState, null, 2));
     const { result } = analysisState;
-    if (!result) {
-      console.log('No result available');
+    if (!result || !result.insights) {
+      console.log('No result or insights available');
       return <p>No analysis results available.</p>;
     }
 
     console.log('Result:', JSON.stringify(result, null, 2));
 
-    const insights = result.insights || result;
+    const insights = result.insights;
     console.log('Insights:', JSON.stringify(insights, null, 2));
 
     return (
@@ -190,7 +191,7 @@ const MainPage = () => {
         </section>
         <section>
           <h3 className="text-xl font-semibold text-purple-400">Additional Information</h3>
-          <p className="text-gray-300">Readability Score: {insights.readability_score ? insights.readability_score.toFixed(2) : 'Not available'}</p>
+          <p className="text-gray-300">Readability Score: {typeof insights.readability_score === 'number' ? insights.readability_score.toFixed(2) : 'Not available'}</p>
           <p className="text-gray-300">Overall Sentiment: {insights.sentiment || 'Not available'}</p>
           <p className="text-gray-300">Essays Analyzed: {insights.post_count || 'Not available'}</p>
         </section>

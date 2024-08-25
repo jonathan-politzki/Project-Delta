@@ -18,9 +18,9 @@ async def extract_concepts(text: str) -> dict:
         logger.info(f"Extracting concepts for text: {text[:100]}...")  # Log first 100 chars
 
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given text and extract the 3 main concepts that make up the author's personality fingerprint. Each concept should be a combination of beliefs, values, and experiences."},
+                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given text and extract the 3 main concepts that make up the author's personality fingerprint, describe the writing style, and provide an overall conclusion."},
                 {"role": "user", "content": text}
             ],
             temperature=0.1
@@ -36,32 +36,45 @@ async def extract_concepts(text: str) -> dict:
             return structured_insights
         else:
             logger.error("No choices returned in response.")
-            return {"key_themes": [], "conclusion": "Error: No insights extracted."}
+            return {"insights": {"key_themes": [], "conclusion": "Error: No insights extracted.", "writing_style": "Unknown"}}
 
     except Exception as e:
         logger.error(f"Error in extract_concepts: {e.__class__.__name__}: {str(e)}")
         logger.exception("Full traceback:")
-        return {"key_themes": [], "conclusion": f"Error extracting insights: {e.__class__.__name__}: {str(e)}"}
+        return {"insights": {"key_themes": [], "conclusion": f"Error extracting insights: {e.__class__.__name__}: {str(e)}", "writing_style": "Unknown"}}
 
 def parse_insights(text: str) -> dict:
-    concepts = text.split('\n')
+    lines = text.split('\n')
     
     structured_insights = {
-        "key_themes": [],
-        "conclusion": ""
+        "insights": {
+            "key_themes": [],
+            "conclusion": "",
+            "writing_style": ""
+        }
     }
 
-    for concept in concepts:
-        if concept.strip():
-            structured_insights["key_themes"].append(concept.strip())
+    current_section = None
+    for line in lines:
+        line = line.strip()
+        if line.startswith("Key Themes:"):
+            current_section = "key_themes"
+        elif line.startswith("Writing Style:"):
+            current_section = "writing_style"
+        elif line.startswith("Conclusion:"):
+            current_section = "conclusion"
+        elif line and current_section:
+            if current_section == "key_themes":
+                structured_insights["insights"]["key_themes"].append(line)
+            elif current_section == "writing_style":
+                structured_insights["insights"]["writing_style"] += line + " "
+            elif current_section == "conclusion":
+                structured_insights["insights"]["conclusion"] += line + " "
 
-    # Ensure we have exactly 3 concepts
-    structured_insights["key_themes"] = structured_insights["key_themes"][:3]
-    while len(structured_insights["key_themes"]) < 3:
-        structured_insights["key_themes"].append("No additional concept identified.")
-
-    # Add a conclusion
-    structured_insights["conclusion"] = "These concepts represent the author's main beliefs, values, and experiences as reflected in their writing."
+    # Ensure we have exactly 3 key themes
+    structured_insights["insights"]["key_themes"] = structured_insights["insights"]["key_themes"][:3]
+    while len(structured_insights["insights"]["key_themes"]) < 3:
+        structured_insights["insights"]["key_themes"].append("No additional concept identified.")
 
     return structured_insights
 
@@ -70,9 +83,9 @@ async def combine_concepts(all_concepts: list) -> dict:
     
     try:
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given concepts from multiple essays and synthesize them into 3 overarching concepts that represent the author's personality fingerprint."},
+                {"role": "system", "content": "You are an experienced writing analyst. Analyze the given concepts from multiple essays and synthesize them into 3 overarching concepts that represent the author's personality fingerprint. Also provide an overall conclusion and describe the general writing style."},
                 {"role": "user", "content": combined_text}
             ],
             temperature=0.1
@@ -83,9 +96,9 @@ async def combine_concepts(all_concepts: list) -> dict:
             return parse_insights(result)
         else:
             logger.error("No choices returned in response for combined concepts.")
-            return {"key_themes": [], "conclusion": "Error: No combined insights extracted."}
+            return {"insights": {"key_themes": [], "conclusion": "Error: No combined insights extracted.", "writing_style": "Unknown"}}
 
     except Exception as e:
         logger.error(f"Error in combine_concepts: {e.__class__.__name__}: {str(e)}")
         logger.exception("Full traceback:")
-        return {"key_themes": [], "conclusion": f"Error extracting combined insights: {e.__class__.__name__}: {str(e)}"}
+        return {"insights": {"key_themes": [], "conclusion": f"Error extracting combined insights: {e.__class__.__name__}: {str(e)}", "writing_style": "Unknown"}}

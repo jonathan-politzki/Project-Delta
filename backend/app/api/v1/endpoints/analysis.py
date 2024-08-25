@@ -51,16 +51,17 @@ async def analyze_url_background(url: str, task_id: str):
             raise ValueError(f"No posts were scraped from the URL: {url}. Please check if the URL is correct and accessible.")
 
         all_insights = await process_posts(df, task_id)
-        combined_insights = combine_insights(all_insights)
+        combined_insights = await generate_full_analysis(all_insights)
         
         analysis_results[task_id] = {
             "status": "completed",
-            "result": {"insights": combined_insights},
+            "result": combined_insights,
             "progress": 100
         }
-        logger.info(f"Analysis completed for task {task_id}")
+        logger.info(f"Analysis completed for task {task_id}. Result: {json.dumps(combined_insights)}")
     except Exception as e:
         logger.error(f"Error in analyze_url_background for task {task_id}: {str(e)}")
+        logger.exception("Full traceback:")
         analysis_results[task_id] = {"status": "error", "message": str(e)}
     
     logger.info(f"Final analysis result for task {task_id}: {json.dumps(analysis_results[task_id])}")
@@ -91,22 +92,35 @@ def update_progress(task_id: str, progress: int, essays_analyzed: int):
     analysis_results[task_id]["essays_analyzed"] = essays_analyzed
     logger.info(f"Task {task_id}: Processed {essays_analyzed}/{analysis_results[task_id]['total_essays']} posts")
 
-def combine_insights(all_insights: list) -> dict:
-    combined_insights = {
-        "writing_style": [],
-        "key_themes": [],
-        "conclusion": ""
-    }
-    
-    for insight in all_insights:
-        combined_insights["writing_style"].extend(insight["writing_style"])
-        combined_insights["key_themes"].extend(insight["key_themes"])
-    
-    combined_insights["writing_style"] = list(set(combined_insights["writing_style"]))[:5]
-    combined_insights["key_themes"] = list(set(combined_insights["key_themes"]))[:5]
-    combined_insights["conclusion"] = f"Analysis based on {len(all_insights)} essays. " + all_insights[-1]["conclusion"]
-    
-    return combined_insights
+async def generate_full_analysis(processed_essays: list) -> dict:
+    logger.info("Generating full analysis")
+
+    try:
+        # Analyze all essays combined
+        combined_analysis = await analyze_multiple_essays(processed_essays)
+
+        return {
+            "insights": {
+                "key_themes": combined_analysis['combined_concepts'],
+                "conclusion": combined_analysis['conclusion'],
+                "writing_style": combined_analysis.get('writing_style', 'Not available'),
+                "readability_score": combined_analysis['avg_readability_score'],
+                "sentiment": combined_analysis['overall_sentiment'],
+                "post_count": combined_analysis['essays_analyzed']
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)
+        return {
+            "insights": {
+                "key_themes": [],
+                "conclusion": f"Error generating full analysis: {str(e)}",
+                "writing_style": "Not available",
+                "readability_score": 0,
+                "sentiment": "Unknown",
+                "post_count": 0
+            }
+        }
 
 @router.get("/status/{task_id}")
 async def get_analysis_status(task_id: str):

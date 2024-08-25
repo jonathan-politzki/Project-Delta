@@ -63,18 +63,28 @@ async def generate_full_analysis(processed_essays: list) -> dict:
     logger.info("Generating full analysis")
 
     try:
-        # Analyze individual essays
-        individual_analyses = [await generate_analysis(essay) for essay in processed_essays]
-
         # Analyze all essays combined
         combined_analysis = await analyze_multiple_essays(processed_essays)
 
         return {
-            "individual_analyses": individual_analyses,
-            "combined_analysis": combined_analysis
+            "insights": {
+                "key_themes": combined_analysis['combined_concepts'],
+                "conclusion": combined_analysis['conclusion'],
+                "writing_style": "Not available",
+                "readability_score": combined_analysis['avg_readability_score'],
+                "sentiment": combined_analysis['overall_sentiment'],
+                "post_count": combined_analysis['essays_analyzed']
+            }
         }
     except Exception as e:
         logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)
         return {
-            "error": f"Error generating full analysis: {str(e)}"
+            "insights": {
+                "key_themes": [],
+                "conclusion": f"Error generating full analysis: {str(e)}",
+                "writing_style": "Not available",
+                "readability_score": 0,
+                "sentiment": "Unknown",
+                "post_count": 0
+            }
         }
