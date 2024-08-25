@@ -179,6 +179,7 @@ const MainPage = () => {
     return (
       <div className="space-y-6">
         {renderSection("Key Themes", renderKeyThemes(), "text-blue-400")}
+        <p className="text-gray-300">Posts analyzed: {insights.post_count}</p>
       </div>
     );
   }, [analysisState]);

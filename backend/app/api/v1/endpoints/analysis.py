@@ -102,10 +102,6 @@ async def generate_full_analysis(processed_essays: list) -> dict:
         return {
             "insights": {
                 "key_themes": combined_analysis['combined_concepts'],
-                "conclusion": combined_analysis['conclusion'],
-                "writing_style": combined_analysis.get('writing_style', 'Not available'),
-                "readability_score": combined_analysis['avg_readability_score'],
-                "sentiment": combined_analysis['overall_sentiment'],
                 "post_count": combined_analysis['essays_analyzed']
             }
         }
@@ -114,10 +110,6 @@ async def generate_full_analysis(processed_essays: list) -> dict:
         return {
             "insights": {
                 "key_themes": [],
-                "conclusion": f"Error generating full analysis: {str(e)}",
-                "writing_style": "Not available",
-                "readability_score": 0,
-                "sentiment": "Unknown",
                 "post_count": 0
             }
         }
