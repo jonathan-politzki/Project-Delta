@@ -17,7 +17,7 @@ from tqdm import tqdm
 import json
 import re
 
-MAX_POSTS = 2
+MAX_POSTS = 4
 BASE_DIR_NAME = "output"
 
 logging.basicConfig(level=logging.INFO)
