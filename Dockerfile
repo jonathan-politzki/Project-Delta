@@ -2,15 +2,13 @@ FROM python:3.9.12
 
 WORKDIR /app
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
+# Copy the entire project
+COPY . .
+
+# Install dependencies
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy the backend directory
-COPY backend ./backend
-
-# Copy nltk.txt and download NLTK data
-COPY nltk.txt .
+# Download NLTK data
 RUN python -c "import nltk; nltk.download([line.strip() for line in open('nltk.txt')], quiet=True)"
 
 # Set the working directory to the backend folder
