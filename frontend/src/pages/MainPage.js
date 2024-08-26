@@ -2,8 +2,6 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
-// Remove the unused import
-// import ReactMarkdown from 'react-markdown';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
 
 const LoadingBar = ({ progress }) => (
@@ -155,42 +153,29 @@ const MainPage = () => {
 
     const { essays, overall_analysis } = analysisState.result.result.overall_analysis;
 
-    const renderEssayInsights = (essay, index) => (
-      <div key={index} className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">Essay {index + 1}</h3>
-        <ul className="list-disc pl-5">
-          {essay.insights.key_themes.map((theme, themeIndex) => (
-            <li key={themeIndex} className="mb-2">{theme}</li>
-          ))}
-        </ul>
-      </div>
-    );
+    const renderConcept = (concept) => {
+      const [title, ...content] = concept.split(':');
+      return (
+        <div key={title} className="mb-4">
+          <p className="font-bold">{title.trim()}</p>
+          <p>{content.join(':').trim()}</p>
+        </div>
+      );
+    };
 
     return (
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
         
-        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Individual Essay Insights</h3>
-        {essays.map(renderEssayInsights)}
+        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Concepts Overview</h3>
+        {overall_analysis.key_themes && overall_analysis.key_themes.length > 0 ? (
+          overall_analysis.key_themes.map(renderConcept)
+        ) : (
+          <p>No key themes available</p>
+        )}
   
-        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Overall Analysis</h3>
-        <div className="overall-analysis mb-8">
-          <p><strong>Writing Style:</strong> {overall_analysis.writing_style}</p>
-          <p><strong>Sentiment:</strong> {overall_analysis.sentiment}</p>
-          <p><strong>Number of Posts Analyzed:</strong> {overall_analysis.post_count}</p>
-        </div>
-  
-        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Key Themes</h3>
-        <div className="key-themes mb-8">
-          <ul className="list-disc pl-5">
-            {overall_analysis.key_themes && overall_analysis.key_themes.length > 0 ? (
-              overall_analysis.key_themes.map((theme, index) => (
-                <li key={index} className="mb-2">{theme}</li>
-              ))
-            ) : (
-              <li>No key themes available</li>
-            )}
-          </ul>
+        <div className="mt-8 text-gray-400 text-sm">
+          <p>Number of Essays Analyzed: {overall_analysis.post_count}</p>
         </div>
       </div>
     );
@@ -207,7 +192,7 @@ const MainPage = () => {
           </ul>
         </nav>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Content Analysis Tool</h1>
+          <h1 className="text-4xl font-bold mb-2">Concept Extraction Tool</h1>
           <p>Discover the key concepts in your content</p>
         </div>
         <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
