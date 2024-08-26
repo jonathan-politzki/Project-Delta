@@ -154,33 +154,46 @@ const MainPage = () => {
 
     const analysis = analysisState.result.result;
 
+    // Function to extract combined analysis
+    const extractCombinedAnalysis = (insights) => {
+      const combinedAnalysisRegex = /^(.*?)(?=Writing Style:|$)/s;
+      const match = insights.match(combinedAnalysisRegex);
+      return match ? match[1].trim() : '';
+    };
+
+    // Function to extract key themes
+    const extractKeyThemes = (insights) => {
+      const keyThemesRegex = /Key Themes:([\s\S]*?)(?:Conclusion:|$)/;
+      const match = insights.match(keyThemesRegex);
+      return match ? match[1].trim() : '';
+    };
+
+    const combinedAnalysis = extractCombinedAnalysis(analysis.insights);
+    const keyThemes = extractKeyThemes(analysis.insights);
+
+    // Custom renderer for ReactMarkdown
+    const customRenderers = {
+      strong: ({node, ...props}) => <span {...props} />, // Remove bold formatting
+      h3: ({node, children, ...props}) => children ? <h3 className="text-xl font-semibold mt-4 mb-2" {...props}>{children}</h3> : null,
+      p: ({node, ...props}) => <p className="mb-4" {...props} />,
+      li: ({node, ...props}) => <li className="mb-2" {...props} />,
+    };
+
     return (
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
         
-        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Detailed Insights</h3>
-        <div className="insights">
-          {analysis.insights ? (
-            <ReactMarkdown>{analysis.insights}</ReactMarkdown>
-          ) : (
-            <p>No detailed insights available.</p>
-          )}
+        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Combined Analysis</h3>
+        <div className="combined-analysis mb-8">
+          <ReactMarkdown components={customRenderers}>{combinedAnalysis}</ReactMarkdown>
         </div>
 
-        <h3 className="text-xl font-semibold mt-8 mb-2">Key Themes</h3>
-        <ul className="list-disc pl-5">
-          {analysis.key_themes && analysis.key_themes.length > 0 ? (
-            analysis.key_themes.map((theme, index) => <li key={index}>{theme}</li>)
-          ) : (
-            <li>No key themes found</li>
-          )}
-        </ul>
+        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Key Themes</h3>
+        <div className="key-themes mb-8">
+          <ReactMarkdown components={customRenderers}>{keyThemes}</ReactMarkdown>
+        </div>
 
-        <h3 className="text-xl font-semibold mt-8 mb-2">Analysis Metrics</h3>
-        <div className="analysis-metrics grid grid-cols-2 gap-4">
-          <p><strong>Writing Style:</strong> {analysis.writing_style || 'N/A'}</p>
-          <p><strong>Readability Score:</strong> {analysis.readability_score ? analysis.readability_score.toFixed(2) : 'N/A'}</p>
-          <p><strong>Sentiment:</strong> {analysis.sentiment || 'N/A'}</p>
+        <div className="text-sm text-gray-600">
           <p><strong>Number of Posts Analyzed:</strong> {analysis.post_count || 'N/A'}</p>
         </div>
       </div>

@@ -460,31 +460,6 @@ video {
 .relative {
   position: relative;
 }
-.analysis-result h2 {
-  color: #2c3e50;
-}
-
-.analysis-result h3 {
-  color: #34495e;
-}
-
-.insights {
-  line-height: 1.6;
-}
-
-.insights p {
-  margin-bottom: 1rem;
-}
-
-.insights strong {
-  color: #3498db;
-}
-
-.analysis-metrics p {
-  background-color: #f8f9fa;
-  padding: 0.5rem;
-  border-radius: 4px;
-}
 .inset-0 {
   inset: 0px;
 }
