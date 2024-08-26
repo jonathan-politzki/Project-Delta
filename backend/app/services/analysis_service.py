@@ -10,12 +10,12 @@ async def generate_analysis(processed_text: dict) -> dict:
     
     try:
         # Extract concepts using the LLM
-        concepts = await extract_concepts(processed_text['processed_text'])
+        concepts_result = await extract_concepts(processed_text['processed_text'])
         
         logger.info("Analysis generated successfully for single essay")
         
         return {
-            "concepts": concepts['key_themes'],
+            "concepts": concepts_result['insights']['key_themes'],
             "readability_score": processed_text['readability_score'],
             "sentiment": processed_text['sentiment']
         }
@@ -26,6 +26,8 @@ async def generate_analysis(processed_text: dict) -> dict:
             "readability_score": 0,
             "sentiment": "Unknown"
         }
+
+
 
 async def analyze_multiple_essays(processed_essays: list) -> dict:
     logger.info(f"Analyzing {len(processed_essays)} essays")

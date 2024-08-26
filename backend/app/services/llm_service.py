@@ -21,7 +21,7 @@ async def extract_concepts(text: str) -> dict:
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an AI model tasked with extracting the main ideas from a text. Take this text and extract the main 3 big concepts in a standalone way, describing only the ideas. Format your response as a JSON object with a 'key_themes' array containing these 3 concepts."},
+                {"role": "system", "content": "You are an AI model tasked with extracting the main concepts, ideas, and arguments from a text. Identify and summarize the 3 most important concepts or ideas presented in the text. Focus solely on the content and avoid commenting on writing style or structure."},
                 {"role": "user", "content": text}
             ],
             temperature=0.1
@@ -45,32 +45,16 @@ async def extract_concepts(text: str) -> dict:
         return {"insights": {"key_themes": []}}
 
 def parse_insights(text: str) -> dict:
-    try:
-        # Attempt to parse the text as JSON
-        insights = json.loads(text)
-        if not isinstance(insights, dict) or 'key_themes' not in insights:
-            raise ValueError("Invalid JSON structure")
-        
-        # Ensure we have exactly 3 key themes
-        key_themes = insights['key_themes'][:3]
-        while len(key_themes) < 3:
-            key_themes.append("No additional concept identified.")
-        
-        return {"insights": {"key_themes": key_themes}}
-    except json.JSONDecodeError:
-        # If JSON parsing fails, fall back to text parsing
-        lines = text.split('\n')
-        key_themes = []
-        for line in lines:
-            if line.strip().startswith('-'):
-                key_themes.append(line.strip()[1:].strip())
-            if len(key_themes) == 3:
-                break
-        
-        while len(key_themes) < 3:
-            key_themes.append("No additional concept identified.")
-        
-        return {"insights": {"key_themes": key_themes}}
+    # Split the text into separate concepts
+    concepts = text.split('\n')
+    # Clean and format each concept
+    key_themes = [concept.strip() for concept in concepts if concept.strip()]
+    # Ensure we have exactly 3 key themes
+    key_themes = key_themes[:3]
+    while len(key_themes) < 3:
+        key_themes.append("No additional concept identified.")
+    
+    return {"insights": {"key_themes": key_themes}}
 
 async def combine_concepts(all_concepts: list) -> dict:
     combined_text = "\n".join([f"Essay {i+1}:\n" + "\n".join(essay["insights"]["key_themes"]) for i, essay in enumerate(all_concepts)])

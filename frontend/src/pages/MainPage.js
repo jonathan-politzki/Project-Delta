@@ -1,6 +1,4 @@
-// MainPage.js
-
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
@@ -78,7 +76,7 @@ const MainPage = () => {
             console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
-              result: result,  // Store the entire result object
+              result: result,
               isLoading: false,
               isComplete: true,
               progress: 100
@@ -117,7 +115,7 @@ const MainPage = () => {
     };
 
     poll(0);
-  }, [scrollToResults, setAnalysisState, setShowConfetti]);
+  }, [scrollToResults]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -147,21 +145,16 @@ const MainPage = () => {
     }
   }, [url, pollForResults]);
 
-  const renderAnalysisResult = useMemo(() => {
+  const renderAnalysisResult = () => {
     const { result } = analysisState;
     console.log('Rendering analysis result. State:', JSON.stringify(analysisState, null, 2));
 
-    if (!result || !result.result) {
+    if (!result || !result.result || !result.result.overall_analysis) {
       console.error('Unexpected result structure:', JSON.stringify(result, null, 2));
       return <p>Error: Unexpected result structure from the server.</p>;
     }
 
-    const analysis = result.result;
-
-    if (!analysis.key_themes || !analysis.writing_style) {
-      console.error('Missing expected fields in analysis:', JSON.stringify(analysis, null, 2));
-      return <p>Error: Analysis result is incomplete.</p>;
-    }
+    const analysis = result.result.overall_analysis;
 
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
@@ -178,30 +171,18 @@ const MainPage = () => {
       </ul>
     );
 
-    // Format LLM service output
-    const formattedInsights = analysis.insights
-      .replace(/\*\*/g, '')
-      .replace(/###/g, '')
-      .split('\n')
-      .filter(line => line.trim() !== '')
-      .slice(0, 6)  // Take only the first 6 lines (3 per essay)
-      .map(line => line.trim());
-
-    const writingFingerprint = [
-      `Writing Style: ${analysis.writing_style}`,
-      `Sentiment: ${analysis.sentiment}`,
-      `Readability Score: ${analysis.readability_score.toFixed(2)}`,
-      `Posts analyzed: ${analysis.post_count}`,
-      `Key Themes: ${analysis.key_themes.join(', ')}`
-    ];
-
     return (
       <div className="space-y-6">
-        {renderSection("Concepts Extracted", renderBulletPoints(formattedInsights), "text-indigo-400")}
-        {renderSection("Writing Fingerprint", renderBulletPoints(writingFingerprint), "text-green-400")}
+        {renderSection("Key Concepts", renderBulletPoints(analysis.key_themes), "text-indigo-400")}
+        {renderSection("Writing Fingerprint", renderBulletPoints([
+          `Writing Style: ${analysis.writing_style}`,
+          `Sentiment: ${analysis.sentiment}`,
+          `Readability Score: ${analysis.readability_score.toFixed(2)}`,
+          `Posts analyzed: ${analysis.post_count}`
+        ]), "text-green-400")}
       </div>
     );
-  }, [analysisState]);
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
@@ -215,7 +196,7 @@ const MainPage = () => {
         </nav>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">Content Analysis Tool</h1>
-          <p>Get insights into the key themes of your content</p>
+          <p>Discover the key concepts in your content</p>
         </div>
         <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
           <div className="flex items-center border-b border-white py-2">
@@ -270,7 +251,7 @@ const MainPage = () => {
               className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-              {renderAnalysisResult}
+              {renderAnalysisResult()}
             </motion.div>
           )}
         </AnimatePresence>
