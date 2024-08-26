@@ -5,7 +5,7 @@ import json
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from app.schemas.analysis_schemas import AnalysisRequest, AnalysisResponse
 from app.services.text_processor import process_text
-from app.services.llm_service import extract_concepts
+from app.services.llm_service import extract_concepts, combine_concepts
 from app.services.embedding_service import generate_embedding
 from app.services.analysis_service import generate_full_analysis
 from app.utils.scraper import scrape_url, scraper_output_to_df
@@ -99,22 +99,32 @@ def update_progress(task_id: str, progress: int, essays_analyzed: int):
     analysis_results[task_id]["essays_analyzed"] = essays_analyzed
     logger.info(f"Task {task_id}: Processed {essays_analyzed}/{analysis_results[task_id]['total_essays']} posts")
 
+async def analyze_multiple_essays(processed_essays: list) -> dict:
+    logger.info(f"Analyzing {len(processed_essays)} essays")
+    
+    all_concepts = [essay['insights']['key_themes'] for essay in processed_essays]
+    combined_concepts = await combine_concepts(all_concepts)
+    
+    return {
+        "essays": processed_essays,
+        "overall_analysis": {
+            "writing_style": "Analytical and informative",  # This could be improved with more analysis
+            "key_themes": combined_concepts['insights']['key_themes'],
+            "readability_score": 0,  # This should be calculated based on the essays
+            "sentiment": "Neutral",  # This should be analyzed based on the essays
+            "post_count": len(processed_essays)
+        }
+    }
+
 async def generate_full_analysis(processed_essays: list) -> dict:
     logger.info("Generating full analysis")
 
     try:
-        # Analyze all essays combined
         combined_analysis = await analyze_multiple_essays(processed_essays)
-
+        
         return {
             "essays": combined_analysis['essays'],
-            "overall_analysis": {
-                "writing_style": combined_analysis['overall_analysis']['writing_style'],
-                "key_themes": combined_analysis['overall_analysis']['key_themes'],
-                "readability_score": combined_analysis['overall_analysis']['readability_score'],
-                "sentiment": combined_analysis['overall_analysis']['sentiment'],
-                "post_count": combined_analysis['overall_analysis']['post_count']
-            }
+            "overall_analysis": combined_analysis['overall_analysis']
         }
     except Exception as e:
         logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)

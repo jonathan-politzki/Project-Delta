@@ -57,7 +57,7 @@ def parse_insights(text: str) -> dict:
     return {"insights": {"key_themes": key_themes}}
 
 async def combine_concepts(all_concepts: list) -> dict:
-    combined_text = "\n".join([f"Essay {i+1}:\n" + "\n".join(essay["insights"]["key_themes"]) for i, essay in enumerate(all_concepts)])
+    combined_text = "\n".join([f"Essay {i+1}:\n" + "\n".join(essay) for i, essay in enumerate(all_concepts)])
     
     logger.info(f"Combining concepts from {len(all_concepts)} essays")
     logger.info(f"Combined text: {combined_text}")
@@ -77,9 +77,9 @@ async def combine_concepts(all_concepts: list) -> dict:
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
             logger.info(f"Raw LLM result for combined concepts: {result}")
-            parsed_result = parse_insights(result)
+            parsed_result = json.loads(result)
             logger.info(f"Parsed insights for combined concepts: {parsed_result}")
-            return parsed_result
+            return {"insights": parsed_result}
         else:
             logger.error("No choices returned in response for combined concepts.")
             return {"insights": {"key_themes": []}}

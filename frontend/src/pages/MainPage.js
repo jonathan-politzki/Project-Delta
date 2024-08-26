@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
+// eslint-disable-next-line no-unused-vars
 import ReactMarkdown from 'react-markdown';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
 
@@ -146,38 +147,44 @@ const MainPage = () => {
     }
   }, [url, pollForResults]);
 
-  const extractCombinedAnalysis = (insights) => {
-    if (!insights) {
-      console.warn('No insights provided to extractCombinedAnalysis');
-      return 'No analysis available';
+  // eslint-disable-next-line no-unused-vars
+  const extractCombinedAnalysis = (analysis) => {
+    if (!analysis || !analysis.overall_analysis) {
+      console.warn('No overall analysis provided to extractCombinedAnalysis');
+      return 'No combined analysis available';
     }
-    const combinedAnalysisRegex = /^(.*?)(?=Writing Style:|$)/s;
-    const match = insights.match(combinedAnalysisRegex);
-    return match ? match[1].trim() : 'No combined analysis available';
+    return analysis.overall_analysis.writing_style || 'No combined analysis available';
   };
 
-  const extractKeyThemes = (insights) => {
-    if (!insights) {
-      console.warn('No insights provided to extractKeyThemes');
+  // eslint-disable-next-line no-unused-vars
+  const extractKeyThemes = (analysis) => {
+    if (!analysis || !analysis.overall_analysis || !analysis.overall_analysis.key_themes) {
+      console.warn('No key themes provided to extractKeyThemes');
       return 'No key themes available';
     }
-    const keyThemesRegex = /Key Themes:([\s\S]*?)(?:Conclusion:|$)/;
-    const match = insights.match(keyThemesRegex);
-    return match ? match[1].trim() : 'No key themes found';
+    return analysis.overall_analysis.key_themes.join('\n\n') || 'No key themes found';
   };
 
   const renderAnalysisResult = () => {
-    if (!analysisState.result || !analysisState.result.result) {
+    if (!analysisState.result || !analysisState.result.overall_analysis) {
       console.error('No result in analysisState');
       return <p>No analysis result available.</p>;
     }
   
-    const analysis = analysisState.result.result.overall_analysis || {};
-    const insights = analysis.insights || '';
+    const { essays, overall_analysis } = analysisState.result.overall_analysis;
   
-    const combinedAnalysis = extractCombinedAnalysis(insights);
-    const keyThemes = extractKeyThemes(insights);
+    const renderEssayInsights = (essay, index) => (
+      <div key={index} className="mb-8">
+        <h3 className="text-xl font-semibold mb-2">Essay {index + 1}</h3>
+        <ul className="list-disc pl-5">
+          {essay.insights.key_themes.map((theme, themeIndex) => (
+            <li key={themeIndex} className="mb-2">{theme}</li>
+          ))}
+        </ul>
+      </div>
+    );
   
+    // eslint-disable-next-line no-unused-vars
     const customRenderers = {
       p: ({ children }) => <p className="mb-4">{children}</p>,
       h3: ({ children }) => <h3 className="text-xl font-semibold mt-4 mb-2">{children}</h3>,
@@ -189,18 +196,23 @@ const MainPage = () => {
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
         
-        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Combined Analysis</h3>
-        <div className="combined-analysis mb-8">
-          <ReactMarkdown components={customRenderers}>{combinedAnalysis}</ReactMarkdown>
+        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Individual Essay Insights</h3>
+        {essays.map(renderEssayInsights)}
+  
+        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Overall Analysis</h3>
+        <div className="overall-analysis mb-8">
+          <p><strong>Writing Style:</strong> {overall_analysis.writing_style}</p>
+          <p><strong>Sentiment:</strong> {overall_analysis.sentiment}</p>
+          <p><strong>Number of Posts Analyzed:</strong> {overall_analysis.post_count}</p>
         </div>
   
         <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Key Themes</h3>
         <div className="key-themes mb-8">
-          <ReactMarkdown components={customRenderers}>{keyThemes}</ReactMarkdown>
-        </div>
-  
-        <div className="text-sm text-gray-600">
-          <p><strong>Number of Posts Analyzed:</strong> {analysis.post_count || 'N/A'}</p>
+          <ul className="list-disc pl-5">
+            {overall_analysis.key_themes.map((theme, index) => (
+              <li key={index} className="mb-2">{theme}</li>
+            ))}
+          </ul>
         </div>
       </div>
     );
