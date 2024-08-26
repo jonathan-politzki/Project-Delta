@@ -155,12 +155,12 @@ const MainPage = () => {
     const { result } = analysisState;
     console.log('Rendering analysis result. State:', JSON.stringify(analysisState, null, 2));
 
-    if (!result || !result.result || !result.result.insights || !result.result.insights.key_themes) {
+    if (!result || !result.result) {
       console.log('No analysis results available. Result structure:', JSON.stringify(result, null, 2));
       return <p>No analysis results available.</p>;
     }
 
-    const insights = result.result.insights;
+    const insights = result.result;
 
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
@@ -177,16 +177,12 @@ const MainPage = () => {
       </ul>
     );
 
-    const renderKeyThemes = () => {
-      if (!Array.isArray(insights.key_themes) || insights.key_themes.length === 0) {
-        return <p>No key themes available.</p>;
-      }
-      return renderBulletPoints(insights.key_themes);
-    };
-
     return (
       <div className="space-y-6">
-        {renderSection("Key Themes", renderKeyThemes(), "text-blue-400")}
+        {renderSection("Key Themes", renderBulletPoints(insights.key_themes), "text-blue-400")}
+        {renderSection("Writing Style", <p className="text-gray-300">{insights.writing_style}</p>, "text-green-400")}
+        {renderSection("Sentiment", <p className="text-gray-300">{insights.sentiment}</p>, "text-yellow-400")}
+        {renderSection("Readability Score", <p className="text-gray-300">{insights.readability_score.toFixed(2)}</p>, "text-purple-400")}
         <p className="text-gray-300">Posts analyzed: {insights.post_count}</p>
       </div>
     );
