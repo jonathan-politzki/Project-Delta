@@ -58,14 +58,15 @@ async def extract_concepts(text: str) -> dict:
         logger.exception("Full traceback:")
         return {"insights": {"key_themes": []}}
 
-def parse_insights(text: str) -> dict:
-    concepts = text.split('\n')
-    key_themes = [concept.strip() for concept in concepts if concept.strip()]
-    key_themes = key_themes[:3]
-    while len(key_themes) < 3:
-        key_themes.append("No additional concept identified.")
-    
-    return {"insights": {"key_themes": key_themes}}
+def parse_llm_response(response_text: str) -> dict:
+    # Remove code block markers if present
+    clean_text = re.sub(r'```json\s*|\s*```', '', response_text)
+    try:
+        return json.loads(clean_text)
+    except json.JSONDecodeError:
+        # If JSON parsing fails, attempt to extract key themes manually
+        themes = re.findall(r'"theme":\s*"([^"]*)"', clean_text)
+        return {"key_themes": [{"theme": theme} for theme in themes]}
 
 async def combine_concepts(all_concepts: list) -> dict:
     combined_text = "\n".join([f"Essay {i+1}:\n" + "\n".join(essay) for i, essay in enumerate(all_concepts)])
@@ -88,7 +89,7 @@ async def combine_concepts(all_concepts: list) -> dict:
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
             logger.info(f"Raw LLM result for combined concepts: {result}")
-            parsed_result = json.loads(result)
+            parsed_result = parse_llm_response(result)
             logger.info(f"Parsed insights for combined concepts: {parsed_result}")
             return parsed_result
         else:
@@ -99,3 +100,4 @@ async def combine_concepts(all_concepts: list) -> dict:
         logger.error(f"Error in combine_concepts: {e.__class__.__name__}: {str(e)}")
         logger.exception("Full traceback:")
         return {"key_themes": []}
+

@@ -82,9 +82,6 @@ async def analyze_multiple_essays(processed_essays: List[Dict[str, Any]]) -> Dic
         }
 
 async def generate_full_analysis(processed_essays: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Generate a full analysis report for all processed essays.
-    """
     logger.info("Generating full analysis")
 
     try:
