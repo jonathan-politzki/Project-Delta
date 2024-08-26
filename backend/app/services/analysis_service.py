@@ -78,13 +78,13 @@ async def generate_full_analysis(processed_essays: list) -> dict:
             })
 
         return {
-            "essays": essays_data,
             "overall_analysis": {
                 "writing_style": combined_analysis['conclusion'],
                 "key_themes": combined_analysis['combined_concepts'],
                 "readability_score": combined_analysis['avg_readability_score'],
                 "sentiment": combined_analysis['overall_sentiment'],
-                "post_count": combined_analysis['essays_analyzed']
+                "post_count": combined_analysis['essays_analyzed'],
+                "insights": insights  # Add this line to include the detailed insights
             }
         }
     except Exception as e:

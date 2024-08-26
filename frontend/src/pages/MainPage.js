@@ -69,11 +69,11 @@ const MainPage = () => {
 
       try {
         const result = await getAnalysisStatus(taskId);
-        console.log('Raw API response:', JSON.stringify(result, null, 2));
-
+        console.log('Received analysis status update');  // Simplified logging
+    
         switch (result.status) {
           case 'completed':
-            console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
+            console.log('Analysis completed');  // Simplified logging
             setAnalysisState(prev => ({
               ...prev,
               result: result,
@@ -104,7 +104,7 @@ const MainPage = () => {
             setTimeout(() => poll(attempts + 1), pollInterval);
         }
       } catch (err) {
-        console.error('Error in pollForResults:', err);
+        console.error('Error in pollForResults:', err.message);  // Simplified error logging
         setAnalysisState(prev => ({ 
           ...prev, 
           error: `Error checking analysis status: ${err.message}`, 
@@ -115,7 +115,7 @@ const MainPage = () => {
     };
 
     poll(0);
-  }, [scrollToResults]);
+  }, [scrollToResults, setAnalysisState, setShowConfetti]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -147,22 +147,22 @@ const MainPage = () => {
 
   const renderAnalysisResult = () => {
     const { result } = analysisState;
-    console.log('Rendering analysis result. State:', JSON.stringify(analysisState, null, 2));
-
+    console.log('Rendering analysis result');  // Simplified logging
+  
     if (!result || !result.result || !result.result.overall_analysis) {
-      console.error('Unexpected result structure:', JSON.stringify(result, null, 2));
+      console.error('Unexpected result structure');  // Simplified error logging
       return <p>Error: Unexpected result structure from the server.</p>;
     }
-
+  
     const analysis = result.result.overall_analysis;
-
+  
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
         <h3 className={`text-xl font-semibold ${color} mb-2`}>{title}</h3>
         {content}
       </section>
     );
-
+  
     const renderBulletPoints = (items) => (
       <ul className="list-disc pl-5 space-y-1">
         {items.map((item, index) => (
@@ -170,7 +170,7 @@ const MainPage = () => {
         ))}
       </ul>
     );
-
+  
     return (
       <div className="space-y-6">
         {renderSection("Key Concepts", renderBulletPoints(analysis.key_themes), "text-indigo-400")}
@@ -180,6 +180,7 @@ const MainPage = () => {
           `Readability Score: ${analysis.readability_score.toFixed(2)}`,
           `Posts analyzed: ${analysis.post_count}`
         ]), "text-green-400")}
+        {analysis.insights && renderSection("Detailed Insights", <p className="text-gray-300">{analysis.insights}</p>, "text-blue-400")}
       </div>
     );
   };
