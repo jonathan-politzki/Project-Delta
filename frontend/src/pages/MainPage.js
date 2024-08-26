@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
-// eslint-disable-next-line no-unused-vars
-import ReactMarkdown from 'react-markdown';
+// Remove the unused import
+// import ReactMarkdown from 'react-markdown';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
 
 const LoadingBar = ({ progress }) => (
@@ -147,31 +147,13 @@ const MainPage = () => {
     }
   }, [url, pollForResults]);
 
-  // eslint-disable-next-line no-unused-vars
-  const extractCombinedAnalysis = (analysis) => {
-    if (!analysis || !analysis.overall_analysis) {
-      console.warn('No overall analysis provided to extractCombinedAnalysis');
-      return 'No combined analysis available';
-    }
-    return analysis.overall_analysis.writing_style || 'No combined analysis available';
-  };
-
-  // eslint-disable-next-line no-unused-vars
-  const extractKeyThemes = (analysis) => {
-    if (!analysis || !analysis.overall_analysis || !analysis.overall_analysis.key_themes) {
-      console.warn('No key themes provided to extractKeyThemes');
-      return 'No key themes available';
-    }
-    return analysis.overall_analysis.key_themes.join('\n\n') || 'No key themes found';
-  };
-
   const renderAnalysisResult = () => {
-    if (!analysisState.result || !analysisState.result.overall_analysis) {
+    if (!analysisState.result || !analysisState.result.result || !analysisState.result.result.overall_analysis) {
       console.error('No result in analysisState');
       return <p>No analysis result available.</p>;
     }
 
-    const { essays, overall_analysis } = analysisState.result.overall_analysis;
+    const { essays, overall_analysis } = analysisState.result.result.overall_analysis;
 
     const renderEssayInsights = (essay, index) => (
       <div key={index} className="mb-8">
