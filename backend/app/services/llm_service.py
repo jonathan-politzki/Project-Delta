@@ -4,9 +4,23 @@ from openai import AsyncOpenAI
 from app.core.config import LLM_PROVIDER, OPENAI_API_KEY
 import logging
 import json
+import re
 
 client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 logger = logging.getLogger(__name__)
+
+def parse_llm_response(response_text: str) -> dict:
+    """
+    Parse the LLM response, handling potential JSON formatting issues.
+    """
+    # Remove code block markers if present
+    clean_text = re.sub(r'```json\s*|\s*```', '', response_text)
+    try:
+        return json.loads(clean_text)
+    except json.JSONDecodeError:
+        # If JSON parsing fails, attempt to extract key themes manually
+        themes = re.findall(r'"theme":\s*"([^"]*)"', clean_text)
+        return {"key_themes": themes if themes else []}
 
 async def extract_concepts(text: str) -> dict:
     if LLM_PROVIDER != "openai":
@@ -45,11 +59,8 @@ async def extract_concepts(text: str) -> dict:
         return {"insights": {"key_themes": []}}
 
 def parse_insights(text: str) -> dict:
-    # Split the text into separate concepts
     concepts = text.split('\n')
-    # Clean and format each concept
     key_themes = [concept.strip() for concept in concepts if concept.strip()]
-    # Ensure we have exactly 3 key themes
     key_themes = key_themes[:3]
     while len(key_themes) < 3:
         key_themes.append("No additional concept identified.")
@@ -77,7 +88,7 @@ async def combine_concepts(all_concepts: list) -> dict:
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
             logger.info(f"Raw LLM result for combined concepts: {result}")
-            parsed_result = json.loads(result)
+            parsed_result = parse_llm_response(result)
             logger.info(f"Parsed insights for combined concepts: {parsed_result}")
             return {"insights": parsed_result}
         else:

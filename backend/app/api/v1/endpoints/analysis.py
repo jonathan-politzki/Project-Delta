@@ -117,27 +117,38 @@ async def analyze_multiple_essays(processed_essays: list) -> dict:
     }
 
 async def generate_full_analysis(processed_essays: list) -> dict:
-    logger.info("Generating full analysis")
-
     try:
         combined_analysis = await analyze_multiple_essays(processed_essays)
         
-        return {
-            "essays": combined_analysis['essays'],
-            "overall_analysis": combined_analysis['overall_analysis']
+        result = {
+            "overall_analysis": {
+                "key_themes": combined_analysis['combined_concepts'],
+                "writing_style": combined_analysis['conclusion'],
+                "readability_score": combined_analysis['avg_readability_score'],
+                "sentiment": combined_analysis['overall_sentiment'],
+                "post_count": combined_analysis['essays_analyzed'],
+            },
+            "essays": [
+                {"insights": {"key_themes": essay['concepts']}} 
+                for essay in processed_essays
+            ]
         }
+        
+        logger.info(f"Full analysis result: {json.dumps(result, indent=2)}")
+        return result
     except Exception as e:
         logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)
         return {
-            "essays": [],
             "overall_analysis": {
-                "writing_style": "Not available",
                 "key_themes": [],
+                "writing_style": "Not available",
                 "readability_score": 0,
                 "sentiment": "Unknown",
-                "post_count": 0
-            }
+                "post_count": 0,
+            },
+            "essays": []
         }
+    
 
 @router.get("/status/{task_id}")
 async def get_analysis_status(task_id: str):
