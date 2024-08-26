@@ -146,28 +146,19 @@ const MainPage = () => {
   }, [url, pollForResults]);
 
   const renderAnalysisResult = useMemo(() => {
-    const { result } = analysisState;
-    console.log('Rendering analysis result. State:', JSON.stringify(analysisState, null, 2));
-
-    if (!result || !result.result) {
-      console.error('Unexpected result structure:', JSON.stringify(result, null, 2));
-      return <p>Error: Unexpected result structure from the server.</p>;
+    if (!analysisState.result || !analysisState.result.result || !analysisState.result.result.overall_analysis) {
+      return null;
     }
-
-    const analysis = result.result;
-
-    if (!analysis.key_themes || !analysis.writing_style) {
-      console.error('Missing expected fields in analysis:', JSON.stringify(analysis, null, 2));
-      return <p>Error: Analysis result is incomplete.</p>;
-    }
-
+  
+    const analysis = analysisState.result.result.overall_analysis;
+  
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
         <h3 className={`text-xl font-semibold ${color} mb-2`}>{title}</h3>
         {content}
       </section>
     );
-
+  
     const renderBulletPoints = (items) => (
       <ul className="list-disc pl-5 space-y-1">
         {items.map((item, index) => (
@@ -175,16 +166,7 @@ const MainPage = () => {
         ))}
       </ul>
     );
-
-    // Format LLM service output
-    const formattedInsights = analysis.insights
-      .replace(/\*\*/g, '')
-      .replace(/###/g, '')
-      .split('\n')
-      .filter(line => line.trim() !== '')
-      .slice(0, 6)  // Take only the first 6 lines (3 per essay)
-      .map(line => line.trim());
-
+  
     const writingFingerprint = [
       `Writing Style: ${analysis.writing_style}`,
       `Sentiment: ${analysis.sentiment}`,
@@ -192,14 +174,16 @@ const MainPage = () => {
       `Posts analyzed: ${analysis.post_count}`,
       `Key Themes: ${analysis.key_themes.join(', ')}`
     ];
-
+  
     return (
       <div className="space-y-6">
-        {renderSection("Concepts Extracted", renderBulletPoints(formattedInsights), "text-indigo-400")}
+        {renderSection("Key Concepts", renderBulletPoints(analysis.key_themes), "text-indigo-400")}
         {renderSection("Writing Fingerprint", renderBulletPoints(writingFingerprint), "text-green-400")}
+        {analysis.insights && analysis.insights.length > 0 && 
+          renderSection("Detailed Insights", renderBulletPoints(analysis.insights), "text-blue-400")}
       </div>
     );
-  }, [analysisState]);
+  }, [analysisState.result]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
@@ -268,7 +252,7 @@ const MainPage = () => {
               className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-              {renderAnalysisResult()}
+              {renderAnalysisResult}
             </motion.div>
           )}
         </AnimatePresence>
