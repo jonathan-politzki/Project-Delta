@@ -154,11 +154,10 @@ const MainPage = () => {
     const { overall_analysis } = analysisState.result.result;
   
     const renderConcept = (concept) => {
-      const [title, ...content] = concept.theme.split(':');
       return (
-        <div key={title} className="mb-4">
-          <p className="font-bold">{title.replace(/\*\*/g, '')}</p>
-          <p>{content.join(':').trim()}</p>
+        <div key={concept.theme} className="mb-6">
+          <h3 className="text-xl font-bold mb-2">{concept.theme}</h3>
+          <p className="text-gray-300">{concept.description}</p>
         </div>
       );
     };
