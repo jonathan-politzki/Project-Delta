@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
+import ReactMarkdown from 'react-markdown';
 import { analyzeUrl, getAnalysisStatus } from '../services/api';
 
 const LoadingBar = ({ progress }) => (
@@ -146,8 +147,6 @@ const MainPage = () => {
   }, [url, pollForResults]);
 
   const renderAnalysisResult = () => {
-    console.log('Rendering analysis result, full state:', JSON.stringify(analysisState, null, 2));
-
     if (!analysisState.result || !analysisState.result.result) {
       console.error('No result in analysisState');
       return <p>No analysis result available.</p>;
@@ -155,42 +154,35 @@ const MainPage = () => {
 
     const analysis = analysisState.result.result;
 
-    console.log('Analysis data:', JSON.stringify(analysis, null, 2));
-
-    if (!analysis || typeof analysis !== 'object') {
-      return <p>Unable to process analysis data.</p>;
-    }
-
-    const renderSection = (title, content, color) => (
-      <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
-        <h3 className={`text-xl font-semibold ${color} mb-2`}>{title}</h3>
-        {content}
-      </section>
-    );
-
-    const renderBulletPoints = (items) => (
-      <ul className="list-disc pl-5 space-y-1">
-        {items.map((item, index) => (
-          <li key={index} className="text-gray-300">{item}</li>
-        ))}
-      </ul>
-    );
-
-    const writingFingerprint = [
-      `Writing Style: ${analysis.overall_analysis.writing_style}`,
-      `Sentiment: ${analysis.overall_analysis.sentiment}`,
-      `Readability Score: ${analysis.overall_analysis.readability_score.toFixed(2)}`,
-      `Posts analyzed: ${analysis.overall_analysis.post_count}`,
-      `Key Themes: ${analysis.overall_analysis.key_themes.join(', ')}`
-    ];
-
     return (
-      <div className="space-y-6">
-        {renderSection("Overall Analysis", renderBulletPoints(writingFingerprint), "text-green-400")}
-        {renderSection("Key Concepts", renderBulletPoints(analysis.overall_analysis.key_themes), "text-indigo-400")}
-        {analysis.essay_insights.map((insight, index) => (
-          renderSection(`Essay ${index + 1} Insights`, renderBulletPoints(insight.split('\n')), "text-blue-400")
-        ))}
+      <div className="analysis-result">
+        <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
+        
+        <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Detailed Insights</h3>
+        <div className="insights">
+          {analysis.insights ? (
+            <ReactMarkdown>{analysis.insights}</ReactMarkdown>
+          ) : (
+            <p>No detailed insights available.</p>
+          )}
+        </div>
+
+        <h3 className="text-xl font-semibold mt-8 mb-2">Key Themes</h3>
+        <ul className="list-disc pl-5">
+          {analysis.key_themes && analysis.key_themes.length > 0 ? (
+            analysis.key_themes.map((theme, index) => <li key={index}>{theme}</li>)
+          ) : (
+            <li>No key themes found</li>
+          )}
+        </ul>
+
+        <h3 className="text-xl font-semibold mt-8 mb-2">Analysis Metrics</h3>
+        <div className="analysis-metrics grid grid-cols-2 gap-4">
+          <p><strong>Writing Style:</strong> {analysis.writing_style || 'N/A'}</p>
+          <p><strong>Readability Score:</strong> {analysis.readability_score ? analysis.readability_score.toFixed(2) : 'N/A'}</p>
+          <p><strong>Sentiment:</strong> {analysis.sentiment || 'N/A'}</p>
+          <p><strong>Number of Posts Analyzed:</strong> {analysis.post_count || 'N/A'}</p>
+        </div>
       </div>
     );
   };
@@ -261,7 +253,6 @@ const MainPage = () => {
               transition={{ duration: 0.5 }}
               className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
-              <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
               {renderAnalysisResult()}
             </motion.div>
           )}

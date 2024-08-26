@@ -60,13 +60,13 @@ async def analyze_url_background(url: str, task_id: str):
             },
             "progress": 100
         }
-        logger.info(f"Analysis completed for task {task_id}. Result: {json.dumps(analysis_results[task_id])}")
+        logger.info(f"Analysis completed for task {task_id}. Result: {json.dumps(analysis_results[task_id], indent=2)}")
     except Exception as e:
         logger.error(f"Error in analyze_url_background for task {task_id}: {str(e)}")
         logger.exception("Full traceback:")
         analysis_results[task_id] = {"status": "error", "message": str(e)}
     
-    logger.info(f"Final analysis result for task {task_id}: {json.dumps(analysis_results[task_id])}")
+    logger.info(f"Final analysis result for task {task_id}: {json.dumps(analysis_results[task_id], indent=2)}")
 
 async def process_posts(df: pd.DataFrame, task_id: str) -> list:
     all_insights = []
@@ -132,5 +132,5 @@ async def get_analysis_status(task_id: str):
         raise HTTPException(status_code=404, detail="Task not found")
     
     status = analysis_results[task_id]
-    logger.info(f"Returning status for task {task_id}: {status}")
+    logger.info(f"Returning status for task {task_id}: {json.dumps(status, indent=2)}")
     return status
