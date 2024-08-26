@@ -92,9 +92,7 @@ const MainPage = () => {
             console.log('Processing update:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
-              progress: typeof result.progress === 'number' 
-                ? result.progress 
-                : Math.min(Math.round((attempts / maxAttempts) * 100), 99),
+              progress: result.progress || prev.progress,
             }));
             setTimeout(() => poll(attempts + 1), pollInterval);
             break;
@@ -150,9 +148,9 @@ const MainPage = () => {
       console.error('No result in analysisState');
       return <p>No analysis result available.</p>;
     }
-
+  
     const { essays, overall_analysis } = analysisState.result.result.overall_analysis;
-
+  
     const renderConcept = (concept) => {
       const [title, ...content] = concept.split(':');
       return (
@@ -162,14 +160,16 @@ const MainPage = () => {
         </div>
       );
     };
-
+  
+    const allThemes = essays.flatMap(essay => essay.insights.key_themes);
+  
     return (
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
         
         <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Concepts Overview</h3>
-        {overall_analysis.key_themes && overall_analysis.key_themes.length > 0 ? (
-          overall_analysis.key_themes.map(renderConcept)
+        {allThemes.length > 0 ? (
+          allThemes.map(renderConcept)
         ) : (
           <p>No key themes available</p>
         )}
@@ -180,7 +180,7 @@ const MainPage = () => {
       </div>
     );
   };
-
+  
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
       {showConfetti && <ReactConfetti />}
