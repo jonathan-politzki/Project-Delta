@@ -53,11 +53,11 @@ async def analyze_url_background(url: str, task_id: str):
         all_insights = await process_posts(df, task_id)
         combined_insights = await generate_full_analysis(all_insights)
         
-        logger.info(f"Combined insights: {json.dumps(combined_insights)}")
-        
         analysis_results[task_id] = {
             "status": "completed",
-            "result": combined_insights,
+            "result": {
+                "overall_analysis": combined_insights
+            },
             "progress": 100
         }
         logger.info(f"Analysis completed for task {task_id}. Result: {json.dumps(analysis_results[task_id])}")

@@ -72,14 +72,13 @@ const MainPage = () => {
       try {
         const result = await getAnalysisStatus(taskId);
         console.log('Raw API response:', JSON.stringify(result, null, 2));
-        console.log('Status update:', result);
 
         switch (result.status) {
           case 'completed':
             console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
-              result: result.result,
+              result: result,  // Store the entire result object
               isLoading: false,
               isComplete: true,
               progress: 100
@@ -150,19 +149,19 @@ const MainPage = () => {
 
   const renderAnalysisResult = useMemo(() => {
     const { result } = analysisState;
-    console.log('Analysis result to render:', JSON.stringify(result, null, 2));
+    console.log('Rendering analysis result. State:', JSON.stringify(analysisState, null, 2));
 
-    if (!result) {
-      console.error('Unexpected result structure:', result);
+    if (!result || !result.result) {
+      console.error('Unexpected result structure:', JSON.stringify(result, null, 2));
       return <p>Error: Unexpected result structure from the server.</p>;
     }
 
-    if (!result.overall_analysis) {
-      console.error('Missing overall_analysis in result:', result);
+    const analysis = result.result;
+
+    if (!analysis.key_themes || !analysis.writing_style) {
+      console.error('Missing expected fields in analysis:', JSON.stringify(analysis, null, 2));
       return <p>Error: Analysis result is incomplete.</p>;
     }
-
-    const analysis = result.overall_analysis;
 
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
@@ -179,13 +178,27 @@ const MainPage = () => {
       </ul>
     );
 
+    // Format LLM service output
+    const formattedInsights = analysis.insights
+      .replace(/\*\*/g, '')
+      .replace(/###/g, '')
+      .split('\n')
+      .filter(line => line.trim() !== '')
+      .slice(0, 6)  // Take only the first 6 lines (3 per essay)
+      .map(line => line.trim());
+
+    const writingFingerprint = [
+      `Writing Style: ${analysis.writing_style}`,
+      `Sentiment: ${analysis.sentiment}`,
+      `Readability Score: ${analysis.readability_score.toFixed(2)}`,
+      `Posts analyzed: ${analysis.post_count}`,
+      `Key Themes: ${analysis.key_themes.join(', ')}`
+    ];
+
     return (
       <div className="space-y-6">
-        {renderSection("Key Themes", renderBulletPoints(analysis.key_themes), "text-blue-400")}
-        {renderSection("Writing Style", <p className="text-gray-300">{analysis.writing_style}</p>, "text-green-400")}
-        {renderSection("Sentiment", <p className="text-gray-300">{analysis.sentiment}</p>, "text-yellow-400")}
-        {renderSection("Readability Score", <p className="text-gray-300">{analysis.readability_score.toFixed(2)}</p>, "text-purple-400")}
-        <p className="text-gray-300">Posts analyzed: {analysis.post_count}</p>
+        {renderSection("Concepts Extracted", renderBulletPoints(formattedInsights), "text-indigo-400")}
+        {renderSection("Writing Fingerprint", renderBulletPoints(writingFingerprint), "text-green-400")}
       </div>
     );
   }, [analysisState]);
