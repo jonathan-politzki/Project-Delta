@@ -60,9 +60,7 @@ async def analyze_url_background(url: str, task_id: str):
         
         analysis_results[task_id] = {
             "status": "completed",
-            "result": {
-                "overall_analysis": combined_insights
-            },
+            "result": combined_insights,
             "progress": 100
         }
         logger.info(f"Analysis completed for task {task_id}. Result: {json.dumps(analysis_results[task_id], indent=2)}")
@@ -72,7 +70,7 @@ async def analyze_url_background(url: str, task_id: str):
         analysis_results[task_id] = {"status": "error", "message": str(e)}
     
     logger.info(f"Final analysis result for task {task_id}: {json.dumps(analysis_results[task_id], indent=2)}")
-
+    
 async def process_posts(df: pd.DataFrame, task_id: str) -> list:
     all_insights = []
     total_posts = len(df)

@@ -151,27 +151,24 @@ const MainPage = () => {
       return <p>No analysis result available.</p>;
     }
   
-    const { essays, overall_analysis } = analysisState.result.result.overall_analysis;
+    const { overall_analysis, essays } = analysisState.result.result;
   
     const renderConcept = (concept) => {
-      const [title, ...content] = concept.split(':');
       return (
-        <div key={title} className="mb-4">
-          <p className="font-bold">{title.trim()}</p>
-          <p>{content.join(':').trim()}</p>
+        <div key={concept.theme} className="mb-4">
+          <p className="font-bold">{concept.theme}</p>
+          <p>{concept.description}</p>
         </div>
       );
     };
-  
-    const allThemes = essays.flatMap(essay => essay.insights.key_themes);
   
     return (
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
         
         <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Concepts Overview</h3>
-        {allThemes.length > 0 ? (
-          allThemes.map(renderConcept)
+        {overall_analysis.key_themes && overall_analysis.key_themes.length > 0 ? (
+          overall_analysis.key_themes.map(renderConcept)
         ) : (
           <p>No key themes available</p>
         )}

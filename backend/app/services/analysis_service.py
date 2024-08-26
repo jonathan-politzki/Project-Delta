@@ -80,38 +80,35 @@ async def analyze_multiple_essays(processed_essays: List[Dict[str, Any]]) -> Dic
             "insights": []
         }
 
-async def generate_full_analysis(processed_essays: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Generate a full analysis report for all processed essays.
-    """
-    logger.info("Generating full analysis")
-
+async def generate_full_analysis(processed_essays: list) -> dict:
     try:
         combined_analysis = await analyze_multiple_essays(processed_essays)
         
         result = {
             "overall_analysis": {
-                "key_themes": combined_analysis['combined_concepts'],
-                "conclusion": combined_analysis['conclusion'],
-                "readability_score": combined_analysis['avg_readability_score'],
-                "sentiment": combined_analysis['overall_sentiment'],
-                "post_count": combined_analysis['essays_analyzed'],
+                "key_themes": combined_analysis['insights']['key_themes'],  # Changed from 'combined_concepts'
+                "writing_style": "Analytical and informative",  # You might want to generate this dynamically
+                "readability_score": combined_analysis.get('avg_readability_score', 0),
+                "sentiment": combined_analysis.get('overall_sentiment', "Unknown"),
+                "post_count": len(processed_essays),
             },
-            "essay_insights": combined_analysis['insights']
+            "essays": [
+                {"insights": {"key_themes": essay['insights']['key_themes']}} 
+                for essay in processed_essays
+            ]
         }
         
-        logger.info("Full analysis generated successfully")
+        logger.info(f"Full analysis result: {json.dumps(result, indent=2)}")
         return result
-
     except Exception as e:
         logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)
         return {
             "overall_analysis": {
                 "key_themes": [],
-                "conclusion": "Not available",
+                "writing_style": "Not available",
                 "readability_score": 0,
                 "sentiment": "Unknown",
-                "post_count": 0,
+                "post_count": len(processed_essays),
             },
-            "essay_insights": []
+            "essays": []
         }
