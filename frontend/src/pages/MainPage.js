@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
@@ -69,11 +69,11 @@ const MainPage = () => {
 
       try {
         const result = await getAnalysisStatus(taskId);
-        console.log('Received analysis status update');  // Simplified logging
-    
+        console.log('Received analysis status update:', JSON.stringify(result, null, 2));
+  
         switch (result.status) {
           case 'completed':
-            console.log('Analysis completed');  // Simplified logging
+            console.log('Analysis completed, full result:', JSON.stringify(result, null, 2));
             setAnalysisState(prev => ({
               ...prev,
               result: result,
@@ -104,7 +104,7 @@ const MainPage = () => {
             setTimeout(() => poll(attempts + 1), pollInterval);
         }
       } catch (err) {
-        console.error('Error in pollForResults:', err.message);  // Simplified error logging
+        console.error('Error in pollForResults:', err);
         setAnalysisState(prev => ({ 
           ...prev, 
           error: `Error checking analysis status: ${err.message}`, 
@@ -145,20 +145,29 @@ const MainPage = () => {
     }
   }, [url, pollForResults]);
 
-  const renderAnalysisResult = useMemo(() => {
-    if (!analysisState.result || !analysisState.result.result || !analysisState.result.result.overall_analysis) {
-      return null;
+  const renderAnalysisResult = () => {
+    console.log('Rendering analysis result, full state:', JSON.stringify(analysisState, null, 2));
+
+    if (!analysisState.result || !analysisState.result.result) {
+      console.error('No result in analysisState');
+      return <p>No analysis result available.</p>;
     }
-  
-    const analysis = analysisState.result.result.overall_analysis;
-  
+
+    const analysis = analysisState.result.result;
+
+    console.log('Analysis data:', JSON.stringify(analysis, null, 2));
+
+    if (!analysis || typeof analysis !== 'object') {
+      return <p>Unable to process analysis data.</p>;
+    }
+
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
         <h3 className={`text-xl font-semibold ${color} mb-2`}>{title}</h3>
         {content}
       </section>
     );
-  
+
     const renderBulletPoints = (items) => (
       <ul className="list-disc pl-5 space-y-1">
         {items.map((item, index) => (
@@ -166,7 +175,15 @@ const MainPage = () => {
         ))}
       </ul>
     );
-  
+
+    // Extract detailed concepts from insights
+    const detailedConcepts = analysis.insights
+      ? analysis.insights
+          .split('\n')
+          .filter(line => line.includes('**') && !line.includes('###'))
+          .map(line => line.replace(/\*\*/g, '').trim())
+      : [];
+
     const writingFingerprint = [
       `Writing Style: ${analysis.writing_style}`,
       `Sentiment: ${analysis.sentiment}`,
@@ -174,16 +191,15 @@ const MainPage = () => {
       `Posts analyzed: ${analysis.post_count}`,
       `Key Themes: ${analysis.key_themes.join(', ')}`
     ];
-  
+
     return (
       <div className="space-y-6">
-        {renderSection("Key Concepts", renderBulletPoints(analysis.key_themes), "text-indigo-400")}
+        {renderSection("Detailed Insights", renderBulletPoints(detailedConcepts), "text-blue-400")}
         {renderSection("Writing Fingerprint", renderBulletPoints(writingFingerprint), "text-green-400")}
-        {analysis.insights && analysis.insights.length > 0 && 
-          renderSection("Detailed Insights", renderBulletPoints(analysis.insights), "text-blue-400")}
+        {renderSection("Key Concepts", renderBulletPoints(analysis.key_themes), "text-indigo-400")}
       </div>
     );
-  }, [analysisState.result]);
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-y-auto">
@@ -252,11 +268,13 @@ const MainPage = () => {
               className="w-full max-w-6xl mt-8 bg-slate-800 rounded-lg p-6 overflow-hidden"
             >
               <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-              {renderAnalysisResult}
+              {renderAnalysisResult()}
             </motion.div>
           )}
         </AnimatePresence>
-
+        {!analysisState.result && analysisState.isComplete && (
+          <p className="text-yellow-500 mt-4">Analysis completed, but no results available.</p>
+        )}
         {analysisState.error && (
           <p className="text-red-500 mt-4">{analysisState.error}</p>
         )}

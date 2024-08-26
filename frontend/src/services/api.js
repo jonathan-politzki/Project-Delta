@@ -32,7 +32,7 @@ export const getAnalysisStatus = async (taskId) => {
   try {
     console.log('Checking status for task:', taskId);
     const response = await api.get(`/api/v1/analysis/status/${taskId}`);
-    console.log('Received status update:', response.data.status);
+    console.log('Full analysis response:', JSON.stringify(response.data, null, 2));
     
     if (!response.data || !response.data.status) {
       throw new Error('Invalid status response from server');

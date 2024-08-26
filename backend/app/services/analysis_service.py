@@ -2,6 +2,7 @@
 
 import logging
 from .llm_service import extract_concepts, combine_concepts
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,8 @@ async def generate_full_analysis(processed_essays: list) -> dict:
     try:
         # Analyze all essays combined
         combined_analysis = await analyze_multiple_essays(processed_essays)
-
-        return {
+        
+        result = {
             "overall_analysis": {
                 "writing_style": combined_analysis['conclusion'],
                 "key_themes": combined_analysis['combined_concepts'],
@@ -82,6 +83,9 @@ async def generate_full_analysis(processed_essays: list) -> dict:
                 "insights": combined_analysis['insights']
             }
         }
+        
+        logger.info(f"Full analysis result: {json.dumps(result, indent=2)}")
+        return result
     except Exception as e:
         logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)
         return {
