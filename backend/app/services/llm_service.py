@@ -88,14 +88,14 @@ async def combine_concepts(all_concepts: list) -> dict:
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
             logger.info(f"Raw LLM result for combined concepts: {result}")
-            parsed_result = parse_llm_response(result)
+            parsed_result = json.loads(result)
             logger.info(f"Parsed insights for combined concepts: {parsed_result}")
-            return {"insights": parsed_result}
+            return parsed_result
         else:
             logger.error("No choices returned in response for combined concepts.")
-            return {"insights": {"key_themes": []}}
+            return {"key_themes": []}
 
     except Exception as e:
         logger.error(f"Error in combine_concepts: {e.__class__.__name__}: {str(e)}")
         logger.exception("Full traceback:")
-        return {"insights": {"key_themes": []}}
+        return {"key_themes": []}

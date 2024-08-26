@@ -172,6 +172,10 @@ const MainPage = () => {
         ) : (
           <p>No key themes available</p>
         )}
+  
+        <div className="mt-8 text-gray-400 text-sm">
+          <p>Number of Essays Analyzed: {overall_analysis.post_count}</p>
+        </div>
       </div>
     );
   };

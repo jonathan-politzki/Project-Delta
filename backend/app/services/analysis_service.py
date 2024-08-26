@@ -1,6 +1,7 @@
 # backend/app/services/analysis_service.py
 
 import logging
+import json
 from typing import List, Dict, Any
 from .llm_service import extract_concepts, combine_concepts
 
@@ -16,10 +17,11 @@ async def generate_analysis(processed_text: Dict[str, Any]) -> Dict[str, Any]:
         concepts_result = await extract_concepts(processed_text['processed_text'])
         
         analysis = {
-            "concepts": concepts_result['insights']['key_themes'],
+            "insights": {
+                "key_themes": concepts_result['insights']['key_themes']
+            },
             "readability_score": processed_text['readability_score'],
-            "sentiment": processed_text['sentiment'],
-            "insights": concepts_result['insights']['summary']
+            "sentiment": processed_text['sentiment']
         }
         
         logger.info("Analysis generated successfully for single essay")
@@ -28,10 +30,11 @@ async def generate_analysis(processed_text: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error in generate_analysis: {str(e)}", exc_info=True)
         return {
-            "concepts": ["Error generating concepts"],
+            "insights": {
+                "key_themes": ["Error generating concepts"]
+            },
             "readability_score": 0,
-            "sentiment": "Unknown",
-            "insights": "Error occurred during analysis"
+            "sentiment": "Unknown"
         }
 
 async def analyze_multiple_essays(processed_essays: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -43,14 +46,14 @@ async def analyze_multiple_essays(processed_essays: List[Dict[str, Any]]) -> Dic
     all_concepts = []
     total_readability = 0
     sentiments = []
-    all_insights = []
+    individual_essay_insights = []
 
     for essay in processed_essays:
         analysis = await generate_analysis(essay)
-        all_concepts.append(analysis['concepts'])
+        all_concepts.append(analysis['insights']['key_themes'])
         total_readability += analysis['readability_score']
         sentiments.append(analysis['sentiment'])
-        all_insights.append(analysis['insights'])
+        individual_essay_insights.append(analysis['insights'])
 
     try:
         combined_concepts = await combine_concepts(all_concepts)
@@ -58,12 +61,11 @@ async def analyze_multiple_essays(processed_essays: List[Dict[str, Any]]) -> Dic
         overall_sentiment = max(set(sentiments), key=sentiments.count) if sentiments else "Unknown"
 
         combined_analysis = {
-            "combined_concepts": combined_concepts['key_themes'],
-            "conclusion": combined_concepts['conclusion'],
+            "insights": combined_concepts,
             "avg_readability_score": avg_readability,
             "overall_sentiment": overall_sentiment,
             "essays_analyzed": len(processed_essays),
-            "insights": all_insights
+            "individual_essay_insights": individual_essay_insights
         }
 
         logger.info("Combined analysis generated successfully")
@@ -72,30 +74,31 @@ async def analyze_multiple_essays(processed_essays: List[Dict[str, Any]]) -> Dic
     except Exception as e:
         logger.error(f"Error in analyze_multiple_essays: {str(e)}", exc_info=True)
         return {
-            "combined_concepts": [],
-            "conclusion": "Error occurred during analysis",
+            "insights": {"key_themes": []},
             "avg_readability_score": 0,
             "overall_sentiment": "Unknown",
             "essays_analyzed": len(processed_essays),
-            "insights": []
+            "individual_essay_insights": []
         }
 
-async def generate_full_analysis(processed_essays: list) -> dict:
+async def generate_full_analysis(processed_essays: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Generate a full analysis report for all processed essays.
+    """
+    logger.info("Generating full analysis")
+
     try:
         combined_analysis = await analyze_multiple_essays(processed_essays)
         
         result = {
             "overall_analysis": {
-                "key_themes": combined_analysis['insights']['key_themes'],  # Changed from 'combined_concepts'
-                "writing_style": "Analytical and informative",  # You might want to generate this dynamically
-                "readability_score": combined_analysis.get('avg_readability_score', 0),
-                "sentiment": combined_analysis.get('overall_sentiment', "Unknown"),
-                "post_count": len(processed_essays),
+                "key_themes": combined_analysis['insights']['key_themes'],
+                "writing_style": "Analytical and informative",
+                "readability_score": combined_analysis['avg_readability_score'],
+                "sentiment": combined_analysis['overall_sentiment'],
+                "post_count": combined_analysis['essays_analyzed'],
             },
-            "essays": [
-                {"insights": {"key_themes": essay['insights']['key_themes']}} 
-                for essay in processed_essays
-            ]
+            "essays": combined_analysis['individual_essay_insights']
         }
         
         logger.info(f"Full analysis result: {json.dumps(result, indent=2)}")

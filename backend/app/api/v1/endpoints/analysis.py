@@ -104,15 +104,12 @@ async def analyze_multiple_essays(processed_essays: list) -> dict:
     combined_concepts = await combine_concepts(all_concepts)
     
     return {
-        "essays": processed_essays,
-        "overall_analysis": {
-            "writing_style": "Analytical and informative",  # This could be improved with more analysis
-            "key_themes": combined_concepts['insights']['key_themes'],
-            "readability_score": 0,  # This should be calculated based on the essays
-            "sentiment": "Neutral",  # This should be analyzed based on the essays
-            "post_count": len(processed_essays)
-        }
+        "insights": combined_concepts,
+        "avg_readability_score": 0,  # You might want to calculate this
+        "overall_sentiment": "Neutral",  # You might want to calculate this
+        "essays_analyzed": len(processed_essays),
     }
+
 
 async def generate_full_analysis(processed_essays: list) -> dict:
     try:
@@ -120,14 +117,14 @@ async def generate_full_analysis(processed_essays: list) -> dict:
         
         result = {
             "overall_analysis": {
-                "key_themes": combined_analysis['combined_concepts'],
-                "writing_style": combined_analysis['conclusion'],
-                "readability_score": combined_analysis['avg_readability_score'],
-                "sentiment": combined_analysis['overall_sentiment'],
-                "post_count": combined_analysis['essays_analyzed'],
+                "key_themes": combined_analysis['insights']['key_themes'],
+                "writing_style": "Analytical and informative",  # You might want to generate this dynamically
+                "readability_score": combined_analysis.get('avg_readability_score', 0),
+                "sentiment": combined_analysis.get('overall_sentiment', "Neutral"),
+                "post_count": len(processed_essays),
             },
             "essays": [
-                {"insights": {"key_themes": essay['concepts']}} 
+                {"insights": {"key_themes": essay['insights']['key_themes']}} 
                 for essay in processed_essays
             ]
         }
@@ -142,7 +139,7 @@ async def generate_full_analysis(processed_essays: list) -> dict:
                 "writing_style": "Not available",
                 "readability_score": 0,
                 "sentiment": "Unknown",
-                "post_count": 0,
+                "post_count": len(processed_essays),
             },
             "essays": []
         }
