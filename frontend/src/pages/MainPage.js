@@ -150,9 +150,9 @@ const MainPage = () => {
       console.error('No result in analysisState');
       return <p>No analysis result available.</p>;
     }
-  
+
     const { overall_analysis } = analysisState.result.result;
-  
+
     const renderConcept = (concept) => {
       return (
         <div key={concept.theme} className="mb-6">
@@ -161,10 +161,16 @@ const MainPage = () => {
         </div>
       );
     };
-  
+
     return (
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
+        
+        {/* Add the static images here */}
+        <div className="mb-8 flex justify-center space-x-4">
+          <img src="/radar_chart.png" alt="Radar Chart" className="max-w-[45%] h-auto" />
+          <img src="/personality.jpg" alt="Personality Chart" className="max-w-[45%] h-auto" />
+        </div>
         
         <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Concepts Overview</h3>
         {overall_analysis.key_themes && overall_analysis.key_themes.length > 0 ? (
@@ -172,7 +178,7 @@ const MainPage = () => {
         ) : (
           <p>No key themes available</p>
         )}
-  
+
         <div className="mt-8 text-gray-400 text-sm">
           <p>Number of Essays Analyzed: {overall_analysis.post_count}</p>
         </div>
