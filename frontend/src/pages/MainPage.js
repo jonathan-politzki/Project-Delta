@@ -116,7 +116,7 @@ const MainPage = () => {
     };
 
     poll(0);
-  }, [scrollToResults, setAnalysisState, setShowConfetti]);
+  }, [scrollToResults]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -146,39 +146,45 @@ const MainPage = () => {
     }
   }, [url, pollForResults]);
 
+  const extractCombinedAnalysis = (insights) => {
+    if (!insights) {
+      console.warn('No insights provided to extractCombinedAnalysis');
+      return 'No analysis available';
+    }
+    const combinedAnalysisRegex = /^(.*?)(?=Writing Style:|$)/s;
+    const match = insights.match(combinedAnalysisRegex);
+    return match ? match[1].trim() : 'No combined analysis available';
+  };
+
+  const extractKeyThemes = (insights) => {
+    if (!insights) {
+      console.warn('No insights provided to extractKeyThemes');
+      return 'No key themes available';
+    }
+    const keyThemesRegex = /Key Themes:([\s\S]*?)(?:Conclusion:|$)/;
+    const match = insights.match(keyThemesRegex);
+    return match ? match[1].trim() : 'No key themes found';
+  };
+
   const renderAnalysisResult = () => {
     if (!analysisState.result || !analysisState.result.result) {
       console.error('No result in analysisState');
       return <p>No analysis result available.</p>;
     }
-
-    const analysis = analysisState.result.result;
-
-    // Function to extract combined analysis
-    const extractCombinedAnalysis = (insights) => {
-      const combinedAnalysisRegex = /^(.*?)(?=Writing Style:|$)/s;
-      const match = insights.match(combinedAnalysisRegex);
-      return match ? match[1].trim() : '';
-    };
-
-    // Function to extract key themes
-    const extractKeyThemes = (insights) => {
-      const keyThemesRegex = /Key Themes:([\s\S]*?)(?:Conclusion:|$)/;
-      const match = insights.match(keyThemesRegex);
-      return match ? match[1].trim() : '';
-    };
-
-    const combinedAnalysis = extractCombinedAnalysis(analysis.insights);
-    const keyThemes = extractKeyThemes(analysis.insights);
-
-    // Custom renderer for ReactMarkdown
+  
+    const analysis = analysisState.result.result.overall_analysis || {};
+    const insights = analysis.insights || '';
+  
+    const combinedAnalysis = extractCombinedAnalysis(insights);
+    const keyThemes = extractKeyThemes(insights);
+  
     const customRenderers = {
-      strong: ({node, ...props}) => <span {...props} />, // Remove bold formatting
-      h3: ({node, children, ...props}) => children ? <h3 className="text-xl font-semibold mt-4 mb-2" {...props}>{children}</h3> : null,
-      p: ({node, ...props}) => <p className="mb-4" {...props} />,
-      li: ({node, ...props}) => <li className="mb-2" {...props} />,
+      p: ({ children }) => <p className="mb-4">{children}</p>,
+      h3: ({ children }) => <h3 className="text-xl font-semibold mt-4 mb-2">{children}</h3>,
+      ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
+      li: ({ children }) => <li className="mb-2">{children}</li>,
     };
-
+  
     return (
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
@@ -187,12 +193,12 @@ const MainPage = () => {
         <div className="combined-analysis mb-8">
           <ReactMarkdown components={customRenderers}>{combinedAnalysis}</ReactMarkdown>
         </div>
-
+  
         <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Key Themes</h3>
         <div className="key-themes mb-8">
           <ReactMarkdown components={customRenderers}>{keyThemes}</ReactMarkdown>
         </div>
-
+  
         <div className="text-sm text-gray-600">
           <p><strong>Number of Posts Analyzed:</strong> {analysis.post_count || 'N/A'}</p>
         </div>

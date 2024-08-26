@@ -45,13 +45,18 @@ async def analyze_url_background(url: str, task_id: str):
     try:
         logger.info(f"Starting background analysis for task {task_id}, URL: {url}")
         scraped_data = await scrape_url(url)
+        logger.info(f"Scraped data: {json.dumps(scraped_data, indent=2)}")
         df = scraper_output_to_df(scraped_data)
         
         if df.empty:
+            logger.warning(f"No posts were scraped from the URL: {url}")
             raise ValueError(f"No posts were scraped from the URL: {url}. Please check if the URL is correct and accessible.")
 
+        logger.info(f"Number of posts scraped: {len(df)}")
         all_insights = await process_posts(df, task_id)
+        logger.info(f"All insights: {json.dumps(all_insights, indent=2)}")
         combined_insights = await generate_full_analysis(all_insights)
+        logger.info(f"Combined insights: {json.dumps(combined_insights, indent=2)}")
         
         analysis_results[task_id] = {
             "status": "completed",
