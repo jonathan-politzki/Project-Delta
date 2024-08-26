@@ -38,6 +38,10 @@ export const getAnalysisStatus = async (taskId) => {
       throw new Error('Invalid status response from server');
     }
     
+    if (response.data.status === 'completed') {
+      console.log('Parsed analysis result:', JSON.stringify(response.data.result, null, 2));
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error in getAnalysisStatus:', error.response?.data || error.message);

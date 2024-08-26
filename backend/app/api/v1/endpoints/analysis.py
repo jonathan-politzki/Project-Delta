@@ -102,7 +102,7 @@ async def generate_full_analysis(processed_essays: list) -> dict:
         return {
             "insights": {
                 "key_themes": combined_analysis['combined_concepts'],
-                "post_count": combined_analysis['essays_analyzed']
+                "post_count": len(processed_essays)
             }
         }
     except Exception as e:

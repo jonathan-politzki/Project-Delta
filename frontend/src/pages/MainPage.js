@@ -77,13 +77,16 @@ const MainPage = () => {
         switch (result.status) {
           case 'completed':
             console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
-            setAnalysisState(prev => ({
-              ...prev,
-              result: result,
-              isLoading: false,
-              isComplete: true,
-              progress: 100
-            }));
+            setAnalysisState(prev => {
+              console.log('Updating state with result:', JSON.stringify(result, null, 2));
+              return {
+                ...prev,
+                result: result,
+                isLoading: false,
+                isComplete: true,
+                progress: 100
+              };
+            });
             setShowConfetti(true);
             setTimeout(() => scrollToResults(3500), 1000);
             break;
@@ -150,7 +153,10 @@ const MainPage = () => {
 
   const renderAnalysisResult = useMemo(() => {
     const { result } = analysisState;
+    console.log('Rendering analysis result. State:', JSON.stringify(analysisState, null, 2));
+
     if (!result || !result.result || !result.result.insights || !result.result.insights.key_themes) {
+      console.log('No analysis results available. Result structure:', JSON.stringify(result, null, 2));
       return <p>No analysis results available.</p>;
     }
 
