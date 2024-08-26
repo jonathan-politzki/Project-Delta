@@ -170,9 +170,9 @@ const MainPage = () => {
       console.error('No result in analysisState');
       return <p>No analysis result available.</p>;
     }
-  
+
     const { essays, overall_analysis } = analysisState.result.overall_analysis;
-  
+
     const renderEssayInsights = (essay, index) => (
       <div key={index} className="mb-8">
         <h3 className="text-xl font-semibold mb-2">Essay {index + 1}</h3>
@@ -183,15 +183,7 @@ const MainPage = () => {
         </ul>
       </div>
     );
-  
-    // eslint-disable-next-line no-unused-vars
-    const customRenderers = {
-      p: ({ children }) => <p className="mb-4">{children}</p>,
-      h3: ({ children }) => <h3 className="text-xl font-semibold mt-4 mb-2">{children}</h3>,
-      ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
-      li: ({ children }) => <li className="mb-2">{children}</li>,
-    };
-  
+
     return (
       <div className="analysis-result">
         <h2 className="text-3xl font-bold mb-6">Analysis Results</h2>
@@ -209,9 +201,13 @@ const MainPage = () => {
         <h3 className="text-2xl font-semibold mb-4 border-b-2 border-gray-300 pb-2">Key Themes</h3>
         <div className="key-themes mb-8">
           <ul className="list-disc pl-5">
-            {overall_analysis.key_themes.map((theme, index) => (
-              <li key={index} className="mb-2">{theme}</li>
-            ))}
+            {overall_analysis.key_themes && overall_analysis.key_themes.length > 0 ? (
+              overall_analysis.key_themes.map((theme, index) => (
+                <li key={index} className="mb-2">{theme}</li>
+              ))
+            ) : (
+              <li>No key themes available</li>
+            )}
           </ul>
         </div>
       </div>
