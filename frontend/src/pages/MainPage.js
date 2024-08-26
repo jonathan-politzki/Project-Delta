@@ -176,6 +176,14 @@ const MainPage = () => {
         <div className="mt-8 text-gray-400 text-sm">
           <p>Number of Essays Analyzed: {overall_analysis.post_count}</p>
         </div>
+
+        {/* New "Roast Me" button */}
+        <button
+          className="mt-8 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg transform transition duration-300 hover:scale-105"
+          onClick={() => console.log('Roast Me clicked')}
+        >
+          Roast Me 🔥
+        </button>
       </div>
     );
   };
