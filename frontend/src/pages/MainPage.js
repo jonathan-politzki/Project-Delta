@@ -205,8 +205,8 @@ const MainPage = () => {
           </ul>
         </nav>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Concept Extraction Tool</h1>
-          <p>Discover the key concepts in your content</p>
+          <h1 className="text-4xl font-bold mb-2">Delta ∆ Analysis</h1>
+          <p>Decode Your Unique Writer Fingerprint</p>
         </div>
         <form onSubmit={handleSubmit} className="w-full max-w-md mb-4">
           <div className="flex items-center border-b border-white py-2">
