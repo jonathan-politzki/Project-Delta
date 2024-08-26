@@ -70,7 +70,6 @@ async def generate_full_analysis(processed_essays: list) -> dict:
     logger.info("Generating full analysis")
 
     try:
-        # Analyze all essays combined
         combined_analysis = await analyze_multiple_essays(processed_essays)
         
         result = {
@@ -80,8 +79,8 @@ async def generate_full_analysis(processed_essays: list) -> dict:
                 "readability_score": combined_analysis['avg_readability_score'],
                 "sentiment": combined_analysis['overall_sentiment'],
                 "post_count": combined_analysis['essays_analyzed'],
-                "insights": combined_analysis['insights']
-            }
+            },
+            "essay_insights": combined_analysis['insights']  # This is now a list of insights per essay
         }
         
         logger.info(f"Full analysis result: {json.dumps(result, indent=2)}")
@@ -95,6 +94,6 @@ async def generate_full_analysis(processed_essays: list) -> dict:
                 "readability_score": 0,
                 "sentiment": "Unknown",
                 "post_count": 0,
-                "insights": []
-            }
+            },
+            "essay_insights": []
         }

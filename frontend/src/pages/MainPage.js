@@ -176,27 +176,21 @@ const MainPage = () => {
       </ul>
     );
 
-    // Extract detailed concepts from insights
-    const detailedConcepts = analysis.insights
-      ? analysis.insights
-          .split('\n')
-          .filter(line => line.includes('**') && !line.includes('###'))
-          .map(line => line.replace(/\*\*/g, '').trim())
-      : [];
-
     const writingFingerprint = [
-      `Writing Style: ${analysis.writing_style}`,
-      `Sentiment: ${analysis.sentiment}`,
-      `Readability Score: ${analysis.readability_score.toFixed(2)}`,
-      `Posts analyzed: ${analysis.post_count}`,
-      `Key Themes: ${analysis.key_themes.join(', ')}`
+      `Writing Style: ${analysis.overall_analysis.writing_style}`,
+      `Sentiment: ${analysis.overall_analysis.sentiment}`,
+      `Readability Score: ${analysis.overall_analysis.readability_score.toFixed(2)}`,
+      `Posts analyzed: ${analysis.overall_analysis.post_count}`,
+      `Key Themes: ${analysis.overall_analysis.key_themes.join(', ')}`
     ];
 
     return (
       <div className="space-y-6">
-        {renderSection("Detailed Insights", renderBulletPoints(detailedConcepts), "text-blue-400")}
-        {renderSection("Writing Fingerprint", renderBulletPoints(writingFingerprint), "text-green-400")}
-        {renderSection("Key Concepts", renderBulletPoints(analysis.key_themes), "text-indigo-400")}
+        {renderSection("Overall Analysis", renderBulletPoints(writingFingerprint), "text-green-400")}
+        {renderSection("Key Concepts", renderBulletPoints(analysis.overall_analysis.key_themes), "text-indigo-400")}
+        {analysis.essay_insights.map((insight, index) => (
+          renderSection(`Essay ${index + 1} Insights`, renderBulletPoints(insight.split('\n')), "text-blue-400")
+        ))}
       </div>
     );
   };
