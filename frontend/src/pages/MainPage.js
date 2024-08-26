@@ -93,6 +93,8 @@ const MainPage = () => {
             setAnalysisState(prev => ({
               ...prev,
               progress: result.progress || prev.progress,
+              essaysAnalyzed: result.essays_analyzed || prev.essaysAnalyzed,
+              totalEssays: result.total_essays || prev.totalEssays,
             }));
             setTimeout(() => poll(attempts + 1), pollInterval);
             break;
@@ -223,6 +225,9 @@ const MainPage = () => {
             <LoadingBar progress={analysisState.progress} />
             <p className="text-gray-300 mt-2">
               Analysis in progress: {analysisState.progress}% complete
+            </p>
+            <p className="text-gray-300 mt-2">
+              Essays analyzed: {analysisState.essaysAnalyzed} / {analysisState.totalEssays}
             </p>
             <p className="text-gray-300 mt-2">
               This may take a few minutes...

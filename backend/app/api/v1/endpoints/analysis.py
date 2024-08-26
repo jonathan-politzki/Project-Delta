@@ -147,5 +147,11 @@ async def get_analysis_status(task_id: str):
         raise HTTPException(status_code=404, detail="Task not found")
     
     status = analysis_results[task_id]
-    logger.info(f"Returning status for task {task_id}: {json.dumps(status, indent=2)}")
+    if status["status"] == "processing":
+        return {
+            "status": "processing",
+            "progress": status["progress"],
+            "essays_analyzed": status.get("essays_analyzed", 0),
+            "total_essays": status.get("total_essays", 0)
+        }
     return status
