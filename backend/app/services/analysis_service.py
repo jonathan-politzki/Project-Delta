@@ -89,13 +89,13 @@ async def generate_full_analysis(processed_essays: List[Dict[str, Any]]) -> Dict
         
         result = {
             "overall_analysis": {
-                "key_themes": combined_analysis['insights']['key_themes'],
+                "key_themes": combined_analysis['key_themes'],
                 "writing_style": "Analytical and informative",
-                "readability_score": combined_analysis['avg_readability_score'],
-                "sentiment": combined_analysis['overall_sentiment'],
-                "post_count": combined_analysis['essays_analyzed'],
+                "readability_score": combined_analysis.get('avg_readability_score', 0),
+                "sentiment": combined_analysis.get('overall_sentiment', "Neutral"),
+                "post_count": len(processed_essays),
             },
-            "essays": combined_analysis['individual_essay_insights']
+            "essays": processed_essays
         }
         
         logger.info(f"Full analysis result: {json.dumps(result, indent=2)}")

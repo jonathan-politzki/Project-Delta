@@ -46,9 +46,7 @@ async def extract_concepts(text: str) -> dict:
         if response and response.choices and len(response.choices) > 0:
             result = response.choices[0].message.content
             logger.info(f"Raw LLM result: {result}")
-            structured_insights = parse_insights(result)
-            logger.info(f"Extracted insights: {structured_insights}")
-            return structured_insights
+            return {"insights": {"key_themes": result.split('\n')}}
         else:
             logger.error("No choices returned in response.")
             return {"insights": {"key_themes": []}}
