@@ -17,7 +17,8 @@ async def generate_analysis(processed_text: dict) -> dict:
         return {
             "concepts": concepts_result['insights']['key_themes'],
             "readability_score": processed_text['readability_score'],
-            "sentiment": processed_text['sentiment']
+            "sentiment": processed_text['sentiment'],
+            "insights": concepts_result['insights']['summary']
         }
     except Exception as e:
         logger.error(f"Error in generate_analysis: {str(e)}", exc_info=True)
@@ -35,12 +36,14 @@ async def analyze_multiple_essays(processed_essays: list) -> dict:
     all_concepts = []
     total_readability = 0
     sentiments = []
+    all_insights = []
 
     for essay in processed_essays:
         analysis = await generate_analysis(essay)
         all_concepts.append(analysis['concepts'])
         total_readability += analysis['readability_score']
         sentiments.append(analysis['sentiment'])
+        all_insights.append(analysis['insights'])
 
     # Combine concepts from all essays
     combined_concepts = await combine_concepts(all_concepts)
@@ -58,7 +61,8 @@ async def analyze_multiple_essays(processed_essays: list) -> dict:
         "conclusion": combined_concepts['conclusion'],
         "avg_readability_score": avg_readability,
         "overall_sentiment": overall_sentiment,
-        "essays_analyzed": len(processed_essays)
+        "essays_analyzed": len(processed_essays),
+        "insights": all_insights
     }
 
 async def generate_full_analysis(processed_essays: list) -> dict:
@@ -79,12 +83,12 @@ async def generate_full_analysis(processed_essays: list) -> dict:
 
         return {
             "overall_analysis": {
-                "writing_style": combined_analysis['conclusion'],
+                "writing_style": combined_analysis['writing_style'],
                 "key_themes": combined_analysis['combined_concepts'],
                 "readability_score": combined_analysis['avg_readability_score'],
                 "sentiment": combined_analysis['overall_sentiment'],
                 "post_count": combined_analysis['essays_analyzed'],
-                "insights": insights  # Add this line to include the detailed insights
+                "insights": combined_analysis['insights']
             }
         }
     except Exception as e:
