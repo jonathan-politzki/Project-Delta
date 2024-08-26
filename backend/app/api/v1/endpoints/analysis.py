@@ -53,12 +53,14 @@ async def analyze_url_background(url: str, task_id: str):
         all_insights = await process_posts(df, task_id)
         combined_insights = await generate_full_analysis(all_insights)
         
+        logger.info(f"Combined insights: {json.dumps(combined_insights)}")
+        
         analysis_results[task_id] = {
             "status": "completed",
             "result": combined_insights,
             "progress": 100
         }
-        logger.info(f"Analysis completed for task {task_id}. Result: {json.dumps(combined_insights)}")
+        logger.info(f"Analysis completed for task {task_id}. Result: {json.dumps(analysis_results[task_id])}")
     except Exception as e:
         logger.error(f"Error in analyze_url_background for task {task_id}: {str(e)}")
         logger.exception("Full traceback:")
@@ -100,16 +102,24 @@ async def generate_full_analysis(processed_essays: list) -> dict:
         combined_analysis = await analyze_multiple_essays(processed_essays)
 
         return {
-            "insights": {
-                "key_themes": combined_analysis['combined_concepts'],
-                "post_count": len(processed_essays)
+            "essays": combined_analysis['essays'],
+            "overall_analysis": {
+                "writing_style": combined_analysis['overall_analysis']['writing_style'],
+                "key_themes": combined_analysis['overall_analysis']['key_themes'],
+                "readability_score": combined_analysis['overall_analysis']['readability_score'],
+                "sentiment": combined_analysis['overall_analysis']['sentiment'],
+                "post_count": combined_analysis['overall_analysis']['post_count']
             }
         }
     except Exception as e:
         logger.error(f"Error in generate_full_analysis: {str(e)}", exc_info=True)
         return {
-            "insights": {
+            "essays": [],
+            "overall_analysis": {
+                "writing_style": "Not available",
                 "key_themes": [],
+                "readability_score": 0,
+                "sentiment": "Unknown",
                 "post_count": 0
             }
         }

@@ -77,16 +77,13 @@ const MainPage = () => {
         switch (result.status) {
           case 'completed':
             console.log('Analysis completed. Full result:', JSON.stringify(result, null, 2));
-            setAnalysisState(prev => {
-              console.log('Updating state with result:', JSON.stringify(result, null, 2));
-              return {
-                ...prev,
-                result: result,
-                isLoading: false,
-                isComplete: true,
-                progress: 100
-              };
-            });
+            setAnalysisState(prev => ({
+              ...prev,
+              result: result.result,
+              isLoading: false,
+              isComplete: true,
+              progress: 100
+            }));
             setShowConfetti(true);
             setTimeout(() => scrollToResults(3500), 1000);
             break;
@@ -153,14 +150,19 @@ const MainPage = () => {
 
   const renderAnalysisResult = useMemo(() => {
     const { result } = analysisState;
-    console.log('Rendering analysis result. State:', JSON.stringify(analysisState, null, 2));
+    console.log('Analysis result to render:', JSON.stringify(result, null, 2));
 
-    if (!result || !result.result) {
-      console.log('No analysis results available. Result structure:', JSON.stringify(result, null, 2));
-      return <p>No analysis results available.</p>;
+    if (!result) {
+      console.error('Unexpected result structure:', result);
+      return <p>Error: Unexpected result structure from the server.</p>;
     }
 
-    const insights = result.result;
+    if (!result.overall_analysis) {
+      console.error('Missing overall_analysis in result:', result);
+      return <p>Error: Analysis result is incomplete.</p>;
+    }
+
+    const analysis = result.overall_analysis;
 
     const renderSection = (title, content, color) => (
       <section className="bg-slate-800 rounded-lg p-4 shadow-md mt-4">
@@ -179,11 +181,11 @@ const MainPage = () => {
 
     return (
       <div className="space-y-6">
-        {renderSection("Key Themes", renderBulletPoints(insights.key_themes), "text-blue-400")}
-        {renderSection("Writing Style", <p className="text-gray-300">{insights.writing_style}</p>, "text-green-400")}
-        {renderSection("Sentiment", <p className="text-gray-300">{insights.sentiment}</p>, "text-yellow-400")}
-        {renderSection("Readability Score", <p className="text-gray-300">{insights.readability_score.toFixed(2)}</p>, "text-purple-400")}
-        <p className="text-gray-300">Posts analyzed: {insights.post_count}</p>
+        {renderSection("Key Themes", renderBulletPoints(analysis.key_themes), "text-blue-400")}
+        {renderSection("Writing Style", <p className="text-gray-300">{analysis.writing_style}</p>, "text-green-400")}
+        {renderSection("Sentiment", <p className="text-gray-300">{analysis.sentiment}</p>, "text-yellow-400")}
+        {renderSection("Readability Score", <p className="text-gray-300">{analysis.readability_score.toFixed(2)}</p>, "text-purple-400")}
+        <p className="text-gray-300">Posts analyzed: {analysis.post_count}</p>
       </div>
     );
   }, [analysisState]);
